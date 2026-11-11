@@ -362,18 +362,9 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *         otherwise
 	 */
 	public boolean contains(TreeNode<T> node) {
-		if (node == null
-				|| isLeaf()
-				|| node.isRoot()) {
-			return false;
-		}
-		for (TreeNode<T> subtree : subtrees()) {
-			if (subtree.equals(node)
-					|| subtree.contains(node)) {
-				return true;
-			}
-		}
-		return false;
+		return node != null
+				&& !node.isRoot()
+				&& node.ancestors().anyMatch(this::equals);
 	}
 
 	/**
@@ -407,20 +398,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *         the call; {@code false} otherwise
 	 */
 	public boolean remove(TreeNode<T> node) {
-		if (node == null
-				|| isLeaf()
-				|| node.isRoot()) {
-			return false;
-		}
-		if (dropSubtree(node)) {
-			return true;
-		}
-		for (TreeNode<T> subtree : subtrees()) {
-			if (subtree.remove(node)) {
-				return true;
-			}
-		}
-		return false;
+		return contains(node) && node.parent().dropSubtree(node);
 	}
 
 	/**
@@ -454,12 +432,19 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *               node, while traversing the tree
 	 */
 	public void traversePreOrder(TraversalAction<TreeNode<T>> action) {
-		if (!action.isCompleted()) {
-			action.perform(this);
-			if (!isLeaf()) {
-				for (TreeNode<T> subtree : subtrees()) {
-					subtree.traversePreOrder(action);
-				}
+		// Explicit stack instead of recursion, so deep trees do not overflow the call stack.
+		// The completion check runs where the recursive version entered a node: a completed
+		// traversal skips the node together with its whole subtree
+		Deque<TreeNode<T>> stack = new ArrayDeque<>();
+		stack.push(this);
+		while (!stack.isEmpty()) {
+			TreeNode<T> node = stack.pop();
+			if (action.isCompleted()) {
+				continue;
+			}
+			action.perform(node);
+			for (TreeNode<T> subtree : node.subtrees().reversed()) {
+				stack.push(subtree);
 			}
 		}
 	}
@@ -473,14 +458,32 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *               node, while traversing the tree
 	 */
 	public void traversePostOrder(TraversalAction<TreeNode<T>> action) {
-		if (!action.isCompleted()) {
-			if (!isLeaf()) {
-				for (TreeNode<T> subtree : subtrees()) {
-					subtree.traversePostOrder(action);
-				}
-			}
-			action.perform(this);
+		// Explicit stack instead of recursion, so deep trees do not overflow the call stack.
+		// As in the recursive version, completion is checked when entering a node; a node that
+		// was entered is still performed after its subtrees, even if they completed the traversal
+		if (action.isCompleted()) {
+			return;
 		}
+		Deque<Frame<T>> stack = new ArrayDeque<>();
+		stack.push(new Frame<>(this, this.subtrees().iterator()));
+		while (!stack.isEmpty()) {
+			Frame<T> frame = stack.peek();
+			if (frame.subtrees().hasNext()) {
+				TreeNode<T> subtree = frame.subtrees().next();
+				if (!action.isCompleted()) {
+					stack.push(new Frame<>(subtree, subtree.subtrees().iterator()));
+				}
+			} else {
+				stack.pop();
+				action.perform(frame.node());
+			}
+		}
+	}
+
+	/**
+	 * A tree node together with the iterator over its not yet visited subtrees
+	 */
+	private record Frame<T>(TreeNode<T> node, Iterator<TreeNode<T>> subtrees) {
 	}
 
 	/**
@@ -656,7 +659,18 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * on the longest downward path between that node and a leaf
 	 */
 	public int height() {
-		return isLeaf() ? 0 : 1 + subtrees().stream().mapToInt(TreeNode::height).max().orElse(0);
+		// Level by level instead of recursion, so deep trees do not overflow the call stack
+		int height = 0;
+		List<TreeNode<T>> level = subtrees();
+		while (!level.isEmpty()) {
+			height++;
+			List<TreeNode<T>> nextLevel = new ArrayList<>();
+			for (TreeNode<T> node : level) {
+				nextLevel.addAll(node.subtrees());
+			}
+			level = nextLevel;
+		}
+		return height;
 	}
 
 	/**
@@ -676,14 +690,36 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * The copy is a root tree node with its own identity, so it is not equal
 	 * to the original. The data objects are not copied, but shared
 	 * <p>
-	 * Implementations storing subtrees must override this method, reset the
-	 * subtrees of the copy and add clones of the original subtrees to it
+	 * Implementations storing subtrees must override {@link #detachedCopy()}
 	 *
 	 * @return a deep copy of the current tree node
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public TreeNode<T> clone() {
+		// Built bottom-up from a post-order traversal: each copy is attached to its parent's copy
+		// while that one is still a root, so attaching is O(1) and deep trees do not recurse
+		Map<TreeNode<T>, TreeNode<T>> copies = new IdentityHashMap<>();
+		traversePostOrder(node -> {
+			TreeNode<T> copy = node.detachedCopy();
+			for (TreeNode<T> subtree : node.subtrees()) {
+				copy.add(copies.remove(subtree));
+			}
+			copies.put(node, copy);
+		});
+		return copies.get(this);
+	}
+
+	/**
+	 * Creates a copy of the current tree node only: same data, but its own identity,
+	 * no parent and no subtrees. Used by {@link #clone()}
+	 * <p>
+	 * Implementations storing subtrees must override this method and reset the
+	 * subtree storage of the copy
+	 *
+	 * @return a detached copy of the current tree node without subtrees
+	 */
+	@SuppressWarnings("unchecked")
+	protected TreeNode<T> detachedCopy() {
 		try {
 			TreeNode<T> copy = (TreeNode<T>) super.clone();
 			copy.id = ID_GENERATOR.getAndIncrement();
@@ -729,12 +765,20 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder("\n");
-		int topNodeLevel = level();
-		traversePreOrder(node -> builder
-				.append("|  ".repeat(node.level() - topNodeLevel))
-				.append("+- ")
-				.append(node.data())
-				.append("\n"));
+		Deque<Map.Entry<TreeNode<T>, Integer>> stack = new ArrayDeque<>();
+		stack.push(Map.entry(this, 0));
+		while (!stack.isEmpty()) {
+			Map.Entry<TreeNode<T>, Integer> entry = stack.pop();
+			TreeNode<T> node = entry.getKey();
+			int depth = entry.getValue();
+			builder.append("|  ".repeat(depth))
+					.append("+- ")
+					.append(node.data())
+					.append("\n");
+			for (TreeNode<T> subtree : node.subtrees().reversed()) {
+				stack.push(Map.entry(subtree, depth + 1));
+			}
+		}
 		return builder.toString();
 	}
 

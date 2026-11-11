@@ -1125,4 +1125,79 @@ public abstract class TreeNodeTest {
 		assertEquals(new ArrayList<>(root.postOrdered()), visited);
 	}
 
+	@Test
+	public void testDeepTreeDoesNotOverflowStack() throws Throwable {
+		// A chain deep enough to overflow a small thread stack with recursive traversals
+		int depth = 10_000;
+		TreeNode<String> deepRoot = createTreeNode(ROOT_DATA);
+		TreeNode<String> current = deepRoot;
+		for (int i = 0; i < depth; i++) {
+			TreeNode<String> next = createTreeNode(NODE_DATA_1);
+			current.add(next);
+			current = next;
+		}
+		TreeNode<String> deepLeaf = current;
+		Throwable[] failure = {null};
+		Thread thread = new Thread(null, () -> {
+			try {
+				assertEquals(depth + 1, deepRoot.size());
+				assertEquals(depth, deepRoot.height());
+				assertEquals(depth, deepLeaf.level());
+				assertTrue(deepRoot.contains(deepLeaf));
+				assertEquals(depth + 1, deepRoot.preOrdered().size());
+				assertEquals(depth + 1, deepRoot.postOrdered().size());
+				assertEquals(depth + 1, deepRoot.findAll(NODE_DATA_1).size() + 1);
+				assertFalse(deepRoot.toString().isEmpty());
+				TreeNode<String> deepClone = deepRoot.clone();
+				assertEquals(depth + 1, deepClone.size());
+				assertEquals(depth, deepClone.height());
+				assertTrue(deepRoot.remove(deepLeaf));
+				assertEquals(depth, deepRoot.size());
+			} catch (Throwable e) {
+				failure[0] = e;
+			}
+		}, "small-stack", 256 * 1024);
+		thread.start();
+		thread.join();
+		if (failure[0] != null) {
+			throw failure[0];
+		}
+	}
+
+	@Test
+	public void testPreOrderTraversalStopsWhenCompleted() {
+		List<TreeNode<String>> visited = new ArrayList<>();
+		root.traversePreOrder(new TraversalAction<>() {
+			@Override
+			public void perform(TreeNode<String> node) {
+				visited.add(node);
+			}
+
+			@Override
+			public boolean isCompleted() {
+				return visited.size() == 3;
+			}
+		});
+		assertEquals(List.of(root, node1, node2), visited);
+	}
+
+	@Test
+	public void testPostOrderTraversalFinishesEnteredNodesWhenCompleted() {
+		// Completion is checked when entering a node, so ancestors of the completing node are
+		// still performed, while not yet entered subtrees are skipped
+		List<TreeNode<String>> visited = new ArrayList<>();
+		root.traversePostOrder(new TraversalAction<>() {
+			@Override
+			public void perform(TreeNode<String> node) {
+				visited.add(node);
+			}
+
+			@Override
+			public boolean isCompleted() {
+				return visited.contains(node4);
+			}
+		});
+		assertEquals(List.of(node1, node4, node3, node2, root), visited);
+	}
+
 }

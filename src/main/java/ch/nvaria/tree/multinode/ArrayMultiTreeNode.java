@@ -17,7 +17,6 @@
 
 package ch.nvaria.tree.multinode;
 
-import ch.nvaria.tree.TraversalAction;
 import ch.nvaria.tree.TreeNode;
 import ch.nvaria.tree.TreeNodeException;
 
@@ -130,9 +129,13 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 
 	@Override
 	public ArrayMultiTreeNode<T> clone() {
-		ArrayMultiTreeNode<T> copy = (ArrayMultiTreeNode<T>) super.clone();
-		copy.subtrees = new ArrayList<>(Math.max(branchingFactor, subtrees.size()));
-		subtrees.forEach(subtree -> copy.add(subtree.clone()));
+		return (ArrayMultiTreeNode<T>) super.clone();
+	}
+
+	@Override
+	protected ArrayMultiTreeNode<T> detachedCopy() {
+		ArrayMultiTreeNode<T> copy = (ArrayMultiTreeNode<T>) super.detachedCopy();
+		copy.subtrees = new ArrayList<>(branchingFactor);
 		return copy;
 	}
 
@@ -170,64 +173,6 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 		return subtree != null
 				&& !subtree.isRoot()
 				&& subtrees.contains(subtree);
-	}
-
-	@Override
-	public boolean contains(TreeNode<T> node) {
-		if (node == null
-				|| isLeaf()
-				|| node.isRoot()) {
-			return false;
-		}
-		for (TreeNode<T> subtree : subtrees) {
-			if (subtree.equals(node) || subtree.contains(node)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public boolean remove(TreeNode<T> node) {
-		if (node == null
-				|| isLeaf()
-				|| node.isRoot()) {
-			return false;
-		}
-		if (dropSubtree(node)) {
-			return true;
-		}
-		for (TreeNode<T> subtree : subtrees) {
-			if (subtree.remove(node)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public void traversePreOrder(TraversalAction<TreeNode<T>> action) {
-		if (!action.isCompleted()) {
-			action.perform(this);
-			for (TreeNode<T> subtree : subtrees) {
-				subtree.traversePreOrder(action);
-			}
-		}
-	}
-
-	@Override
-	public void traversePostOrder(TraversalAction<TreeNode<T>> action) {
-		if (!action.isCompleted()) {
-			for (TreeNode<T> subtree : subtrees) {
-				subtree.traversePostOrder(action);
-			}
-			action.perform(this);
-		}
-	}
-
-	@Override
-	public int height() {
-		return isLeaf() ? 0 : 1 + subtrees.stream().mapToInt(TreeNode::height).max().orElse(0);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -33,6 +33,10 @@
 7. `clone` is now a deep copy with its own identity. **Behavior change:** the clone is no longer
    equal to the original
 8. `ArrayMultiTreeNode` is backed by an `ArrayList`; serialized form changed (`serialVersionUID` 2)
+9. Deep trees no longer throw `StackOverflowError` ([Scalified/tree#6](https://github.com/Scalified/tree/issues/6),
+   [#13](https://github.com/Scalified/tree/issues/13)): traversals, `size`, `height`, `toString` and `clone` use an
+   explicit stack; `contains` and `remove(node)` walk up from the node in O(depth) instead of searching the tree.
+   New protected hook `detachedCopy()` replaces overriding `clone()` in implementations
 
 # 0.2.4
 

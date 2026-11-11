@@ -17,7 +17,6 @@
 
 package ch.nvaria.tree.multinode;
 
-import ch.nvaria.tree.TraversalAction;
 import ch.nvaria.tree.TreeNode;
 import ch.nvaria.tree.TreeNodeException;
 
@@ -193,13 +192,15 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 	 */
 	@Override
 	public LinkedMultiTreeNode<T> clone() {
-		LinkedMultiTreeNode<T> copy = (LinkedMultiTreeNode<T>) super.clone();
+		return (LinkedMultiTreeNode<T>) super.clone();
+	}
+
+	@Override
+	protected LinkedMultiTreeNode<T> detachedCopy() {
+		LinkedMultiTreeNode<T> copy = (LinkedMultiTreeNode<T>) super.detachedCopy();
 		copy.leftMostNode = null;
 		copy.rightSiblingNode = null;
 		copy.lastSubtreeNode = null;
-		for (LinkedMultiTreeNode<T> subtree = leftMostNode; subtree != null; subtree = subtree.rightSiblingNode) {
-			copy.add(subtree.clone());
-		}
 		return copy;
 	}
 
@@ -277,141 +278,6 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Checks whether the current tree node with all of its descendants
-	 * (entire tree) contains the specified node
-	 * <p>
-	 * Overridden to have a faster array implementation
-	 *
-	 * @param node node whose presence within the current tree node with
-	 *             all of its descendants (entire tree) is to be checked
-	 * @return {@code true} if the current node with all of its descendants
-	 *         (entire tree) contains the specified node; {@code false}
-	 *         otherwise
-	 */
-	@Override
-	public boolean contains(TreeNode<T> node) {
-		if (node == null
-				|| isLeaf()
-				|| node.isRoot()) {
-			return false;
-		}
-		LinkedMultiTreeNode<T> nextSubtree = leftMostNode;
-		while (nextSubtree != null) {
-			if (nextSubtree.equals(node)) {
-				return true;
-			}
-			if (nextSubtree.contains(node)) {
-				return true;
-			}
-			nextSubtree = nextSubtree.rightSiblingNode;
-		}
-		return false;
-	}
-
-	/**
-	 * Removes the first occurrence of the specified node from the entire tree,
-	 * starting from the current tree node and traversing in a pre order manner
-	 * <p>
-	 * Checks whether the current tree node was changed as a result of the call
-	 * <p>
-	 * Overridden to have a faster array implementation
-	 *
-	 * @param node node to remove from the entire tree
-	 * @return {@code true} if the current tree node was changed as a result of
-	 *         the call; {@code false} otherwise
-	 */
-	@Override
-	public boolean remove(TreeNode<T> node) {
-		if (node == null
-				|| isLeaf()
-				|| node.isRoot()) {
-			return false;
-		}
-		if (dropSubtree(node)) {
-			return true;
-		}
-		LinkedMultiTreeNode<T> nextSubtree = leftMostNode;
-		while (nextSubtree != null) {
-			if (nextSubtree.remove(node)) {
-				return true;
-			}
-			nextSubtree = nextSubtree.rightSiblingNode;
-		}
-		return false;
-	}
-
-	/**
-	 * Traverses the tree in a pre ordered manner starting from the
-	 * current tree node and performs the traversal action on each
-	 * traversed tree node
-	 * <p>
-	 * Overridden to have a faster array implementation
-	 *
-	 * @param action action, which is to be performed on each tree
-	 *               node, while traversing the tree
-	 */
-	@Override
-	public void traversePreOrder(TraversalAction<TreeNode<T>> action) {
-		if (!action.isCompleted()) {
-			action.perform(this);
-			if (!isLeaf()) {
-				LinkedMultiTreeNode<T> nextNode = leftMostNode;
-				while (nextNode != null) {
-					nextNode.traversePreOrder(action);
-					nextNode = nextNode.rightSiblingNode;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Traverses the tree in a post ordered manner starting from the
-	 * current tree node and performs the traversal action on each
-	 * traversed tree node
-	 * <p>
-	 * Overridden to have a faster array implementation
-	 *
-	 * @param action action, which is to be performed on each tree
-	 *               node, while traversing the tree
-	 */
-	@Override
-	public void traversePostOrder(TraversalAction<TreeNode<T>> action) {
-		if (!action.isCompleted()) {
-			if (!isLeaf()) {
-				LinkedMultiTreeNode<T> nextNode = leftMostNode;
-				while (nextNode != null) {
-					nextNode.traversePostOrder(action);
-					nextNode = nextNode.rightSiblingNode;
-				}
-			}
-			action.perform(this);
-		}
-	}
-
-	/**
-	 * Returns the height of the current tree node, e.g. the number of edges
-	 * on the longest downward path between that node and a leaf
-	 * <p>
-	 * Overridden to have a faster array implementation
-	 *
-	 * @return height of the current tree node, e.g. the number of edges
-	 * on the longest downward path between that node and a leaf
-	 */
-	@Override
-	public int height() {
-		if (isLeaf()) {
-			return 0;
-		}
-		int height = 0;
-		LinkedMultiTreeNode<T> nextNode = leftMostNode;
-		while (nextNode != null) {
-			height = Math.max(height, nextNode.height());
-			nextNode = nextNode.rightSiblingNode;
-		}
-		return height + 1;
 	}
 
 	/**

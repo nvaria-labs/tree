@@ -18,6 +18,9 @@
 package ch.nvaria.tree.multinode;
 
 import ch.nvaria.tree.TreeNode;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author shell
@@ -46,6 +49,17 @@ public class LinkedMultiTreeNodeTest extends MultiTreeNodeTest {
 	@Override
 	protected <T> TreeNode<T> createTreeNode(T data) {
 		return new LinkedMultiTreeNode<>(data);
+	}
+
+	@Test
+	public void testAddingNodeOfAnotherTypeLeavesTreesIntact() {
+		TreeNode<String> formerParent = new ArrayMultiTreeNode<>(ROOT_DATA);
+		TreeNode<String> arrayChild = new ArrayMultiTreeNode<>(NODE_DATA_1);
+		formerParent.add(arrayChild);
+		assertThrows(ClassCastException.class, () -> node1.add(arrayChild));
+		assertTrue(formerParent.hasSubtree(arrayChild));
+		assertEquals(formerParent, arrayChild.parent());
+		assertTrue(node1.isLeaf());
 	}
 
 }

@@ -20,7 +20,9 @@ package ch.nvaria.tree.multinode;
 import ch.nvaria.tree.TreeNode;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author shell
@@ -61,6 +63,24 @@ public class ArrayMultiTreeNodeTest extends MultiTreeNodeTest {
 			int incorrectBranchingFactor = -10;
 			createTreeNode(ROOT_DATA, incorrectBranchingFactor);
 		});
+	}
+
+	@Test
+	public void testLargeBranchingFactorAllocatesLazily() {
+		// The child array is only allocated on the first add, so leaves cost nothing
+		TreeNode<String> node = createTreeNode(ROOT_DATA, Integer.MAX_VALUE - 8);
+		assertTrue(node.isLeaf());
+		assertEquals(List.of(), node.subtrees());
+	}
+
+	@Test
+	public void testAddingLinkedNodeToArrayNodeIsSupported() {
+		TreeNode<String> arrayRoot = createTreeNode(ROOT_DATA);
+		for (int i = 0; i < 3; i++) {
+			arrayRoot.add(new LinkedMultiTreeNode<>(NODE_DATA_1));
+		}
+		assertEquals(4, arrayRoot.size());
+		assertEquals(4, arrayRoot.stream().count());
 	}
 
 }

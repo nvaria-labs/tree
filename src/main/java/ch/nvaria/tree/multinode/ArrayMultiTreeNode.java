@@ -22,6 +22,7 @@ import ch.nvaria.tree.TreeNodeException;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,10 +45,11 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 	 * Default initial branching factor, that is the number of subtrees
 	 * this node can have before getting resized
 	 */
-	private static final int DEFAULT_BRANCHING_FACTOR = 10;
+	private static final int DEFAULT_BRANCHING_FACTOR = 2;
 
 	/**
-	 * The subtrees of the current tree node, in insertion order
+	 * The subtrees of the current tree node, in insertion order; {@code null} while the
+	 * current tree node is a leaf, so that leaves, the majority of nodes, allocate no array
 	 */
 	private ArrayList<TreeNode<T>> subtrees;
 
@@ -79,7 +81,6 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 			throw new IllegalArgumentException("Branching factor can not be negative");
 		}
 		this.branchingFactor = branchingFactor;
-		this.subtrees = new ArrayList<>(branchingFactor);
 	}
 
 	/**
@@ -91,7 +92,7 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 	 */
 	@Override
 	public List<TreeNode<T>> subtrees() {
-		return List.copyOf(subtrees);
+		return isLeaf() ? List.of() : List.copyOf(subtrees);
 	}
 
 	@Override
@@ -101,6 +102,9 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 		}
 		prepareAttach(subtree);
 		linkParent(subtree, this);
+		if (subtrees == null) {
+			subtrees = new ArrayList<>(branchingFactor);
+		}
 		subtrees.add(subtree);
 		structureChanged();
 		return true;
@@ -109,20 +113,39 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 	@Override
 	public boolean dropSubtree(TreeNode<T> subtree) {
 		if (subtree == null
-				|| subtree.isRoot()
-				|| !subtrees.remove(subtree)) {
+				|| subtree.parent() != this) {
 			return false;
+		}
+		subtrees.remove(indexOf(subtree));
+		if (subtrees.isEmpty()) {
+			subtrees = null;
 		}
 		unlinkParent(subtree);
 		structureChanged();
 		return true;
 	}
 
+	/**
+	 * Returns the index of the specified subtree, compared by identity, so that subclasses
+	 * overriding {@link Object#equals(Object)} can't make the tree find another subtree
+	 *
+	 * @param subtree subtree of the current tree node
+	 * @return index of the subtree; {@code -1} if it is not a subtree of the current tree node
+	 */
+	private int indexOf(TreeNode<T> subtree) {
+		for (int i = 0; i < subtrees.size(); i++) {
+			if (subtrees.get(i) == subtree) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	@Override
 	public void clear() {
 		if (!isLeaf()) {
 			subtrees.forEach(TreeNode::unlinkParent);
-			subtrees = new ArrayList<>(branchingFactor);
+			subtrees = null;
 			structureChanged();
 		}
 	}
@@ -135,36 +158,34 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 	@Override
 	protected ArrayMultiTreeNode<T> detachedCopy() {
 		ArrayMultiTreeNode<T> copy = (ArrayMultiTreeNode<T>) super.detachedCopy();
-		copy.subtrees = new ArrayList<>(branchingFactor);
+		copy.subtrees = null;
 		return copy;
 	}
 
 	@Override
 	public boolean isLeaf() {
-		return subtrees.isEmpty();
+		return subtrees == null;
 	}
 
 	@Override
 	public boolean hasSubtree(TreeNode<T> subtree) {
 		return subtree != null
-				&& !subtree.isRoot()
-				&& subtrees.contains(subtree);
+				&& subtree.parent() == this;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<MultiTreeNode<T>> siblings() {
 		if (isRoot()) {
-			String message = String.format("Unable to find the siblings. The tree node %1$s is root", root());
-			throw new TreeNodeException(message);
+			throw new TreeNodeException("Unable to find the siblings. The tree node " + describe(this) + " is root");
 		}
 		List<MultiTreeNode<T>> siblings = new ArrayList<>();
 		for (TreeNode<T> sibling : ((ArrayMultiTreeNode<T>) parent()).subtrees) {
-			if (!sibling.equals(this)) {
+			if (sibling != this) {
 				siblings.add((MultiTreeNode<T>) sibling);
 			}
 		}
-		return siblings;
+		return Collections.unmodifiableList(siblings);
 	}
 
 }

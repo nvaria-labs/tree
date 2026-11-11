@@ -80,7 +80,7 @@ public abstract class MultiTreeNode<T> extends TreeNode<T> {
 	@SuppressWarnings("unchecked")
 	public List<MultiTreeNode<T>> siblings() {
 		if (isRoot()) {
-			String message = String.format("Unable to find the siblings. The tree node %1$s is root", root());
+			String message = "Unable to find the siblings. The tree node " + describe(this) + " is root";
 			throw new TreeNodeException(message);
 		}
 		return parent().subtrees().stream()

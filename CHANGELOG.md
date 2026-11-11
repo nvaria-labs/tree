@@ -46,6 +46,14 @@
 12. **Breaking:** `iterator()` returns `Iterator<TreeNode<T>>` and is implemented in `TreeNode`;
     `TreeNodeIterator` was removed (it was protected, so the result of `iterator()` was not usable
     outside the package)
+13. Exception messages describe nodes by their data (abbreviated to 100 characters) instead of
+    `toString()` of the whole subtree, which put every data value of the tree into logs
+14. All returned lists are unmodifiable snapshots (`subtrees` of `LinkedMultiTreeNode` used to be
+    modifiable without effect)
+15. `LinkedMultiTreeNode`: left sibling pointer, so `dropSubtree` and `hasSubtree` are O(1) instead of
+    scanning the siblings; adding a node of another type throws before changing either tree
+16. `ArrayMultiTreeNode`: the child list is allocated on the first `add` (leaves allocate nothing);
+    default initial branching factor lowered from 10 to 2. `dropSubtree`/`hasSubtree` compare by identity
 
 # 0.2.4
 

@@ -505,7 +505,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	public List<TreeNode<T>> preOrdered() {
 		List<TreeNode<T>> preOrdered = new ArrayList<>();
 		traversePreOrder(preOrdered::add);
-		return preOrdered;
+		return Collections.unmodifiableList(preOrdered);
 	}
 
 	/**
@@ -518,7 +518,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	public List<TreeNode<T>> postOrdered() {
 		List<TreeNode<T>> postOrdered = new ArrayList<>();
 		traversePostOrder(postOrdered::add);
-		return postOrdered;
+		return Collections.unmodifiableList(postOrdered);
 	}
 
 	/**
@@ -539,7 +539,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 		}
 		String errorMessage = "Unable to build the path between tree nodes. ";
 		if (descendant.isRoot()) {
-			String message = String.format(errorMessage + "Current node %1$s is root", descendant);
+			String message = errorMessage + "The tree node " + describe(descendant) + " is root";
 			throw new TreeNodeException(message);
 		}
 		LinkedList<TreeNode<T>> path = new LinkedList<>();
@@ -547,11 +547,11 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 		for (TreeNode<T> node = descendant.parent(); node != null; node = node.parent()) {
 			path.addFirst(node);
 			if (this.equals(node)) {
-				return path;
+				return Collections.unmodifiableList(path);
 			}
 		}
-		String message = String.format(errorMessage +
-				"The specified tree node %1$s is not the descendant of tree node %2$s", descendant, this);
+		String message = errorMessage + "The specified tree node " + describe(descendant)
+				+ " is not a descendant of the tree node " + describe(this);
 		throw new TreeNodeException(message);
 	}
 
@@ -576,13 +576,13 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 			throw new TreeNodeException(message);
 		}
 		if (this.root() != node.root()) {
-			String message = String.format(errorMessage +
-					"The specified tree node %1$s was not found in the current tree node %2$s", node, this);
+			String message = errorMessage + "The specified tree node " + describe(node)
+					+ " is not in the tree of the tree node " + describe(this);
 			throw new TreeNodeException(message);
 		}
 		if (this.isRoot()
 				|| node.isRoot()) {
-			String message = String.format(errorMessage + "The tree node %1$s is root", this.isRoot() ? this : node);
+			String message = errorMessage + "The tree node " + describe(this.isRoot() ? this : node) + " is root";
 			throw new TreeNodeException(message);
 		}
 		Set<TreeNode<T>> nodeAncestors = node.ancestors()
@@ -844,13 +844,34 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 		// Every ancestor has at least one subtree, so a leaf other than the current tree node
 		// can't be one of them: the walk up to the root is only needed for non-leaf subtrees
 		if (subtree == this || !subtree.isLeaf() && ancestors().anyMatch(ancestor -> ancestor == subtree)) {
-			String message = String.format(
-					"Unable to add the tree node %1$s. It is the current tree node or one of its ancestors", subtree);
+			String message = "Unable to add the tree node " + describe(subtree)
+					+ ". It is the current tree node or one of its ancestors";
 			throw new TreeNodeException(message);
 		}
 		if (subtree.parent != null) {
 			subtree.parent.dropSubtree(subtree);
 		}
+	}
+
+	/**
+	 * Maximum number of characters of a data object's string form used in exception messages
+	 */
+	private static final int MAX_DESCRIBED_DATA_LENGTH = 100;
+
+	/**
+	 * Describes the specified tree node for exception messages by its data only. Unlike
+	 * {@link #toString()} it never includes the subtree, so messages stay small and do not
+	 * copy the whole tree with all of its data into logs
+	 *
+	 * @param node tree node to describe
+	 * @return short description of the tree node
+	 */
+	protected static String describe(TreeNode<?> node) {
+		String data = String.valueOf(node.data());
+		if (data.length() > MAX_DESCRIBED_DATA_LENGTH) {
+			data = data.substring(0, MAX_DESCRIBED_DATA_LENGTH) + "...";
+		}
+		return "with data '" + data + "'";
 	}
 
 	protected static <T> void unlinkParent(TreeNode<T> node) {
@@ -986,7 +1007,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 						+ "next() has not been called, or remove() has already been called after the last call to next()");
 			}
 			if (lastReturned.isRoot()) {
-				String message = String.format(errorMessage + "The tree node %1$s is root", lastReturned);
+				String message = errorMessage + "The tree node " + describe(lastReturned) + " is root";
 				throw new TreeNodeException(message);
 			}
 			if (lastReturned == start) {

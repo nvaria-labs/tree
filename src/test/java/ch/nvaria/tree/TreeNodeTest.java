@@ -1291,4 +1291,70 @@ public abstract class TreeNodeTest {
 		assertEquals(List.of(node1, node4, node3, node2, root), visited);
 	}
 
+	@Test
+	public void testExceptionMessagesDoNotContainTheTree() {
+		// Messages describe a node by its (abbreviated) data, never by toString() of its subtree
+		TreeNodeException pathException = assertThrows(TreeNodeException.class, () -> node2.path(node1));
+		assertFalse(pathException.getMessage().contains("+-"), pathException.getMessage());
+		assertTrue(pathException.getMessage().contains(NODE_DATA_1), pathException.getMessage());
+
+		TreeNode<String> hugeData = createTreeNode("x".repeat(100_000));
+		root.add(hugeData);
+		TreeNodeException cycleException = assertThrows(TreeNodeException.class, () -> hugeData.add(root));
+		assertTrue(cycleException.getMessage().length() < 400, "Message length: " + cycleException.getMessage().length());
+	}
+
+	@Test
+	public void testReturnedListsAreUnmodifiable() {
+		TreeNode<String> extra = createTreeNode(ANOTHER_NODE_DATA);
+		for (List<TreeNode<String>> list : List.of(root.subtrees(), node1.subtrees(), root.preOrdered(),
+				root.postOrdered(), root.path(node6), root.findAll(NODE_DATA_1))) {
+			assertThrows(UnsupportedOperationException.class, () -> list.add(extra));
+		}
+		assertEquals(3, root.subtrees().size());
+	}
+
+	@Test
+	public void testDropSubtreeOfAnotherNodeIsRejected() {
+		assertFalse(node2.dropSubtree(node10));
+		assertFalse(node2.dropSubtree(node2));
+		assertFalse(node2.dropSubtree(root));
+		assertTrue(node9.hasSubtree(node10));
+		assertFalse(node2.hasSubtree(node10));
+	}
+
+	@Test
+	public void testDropMiddleSubtreeKeepsOrder() {
+		assertTrue(node2.dropSubtree(node7));
+		assertEquals(List.of(node3, node8), node2.subtrees());
+		TreeNode<String> added = createTreeNode(ANOTHER_NODE_DATA);
+		node2.add(added);
+		assertEquals(List.of(node3, node8, added), node2.subtrees());
+		assertTrue(node2.dropSubtree(node3));
+		assertTrue(node2.dropSubtree(added));
+		assertEquals(List.of(node8), node2.subtrees());
+		assertTrue(node2.dropSubtree(node8));
+		assertTrue(node2.isLeaf());
+		node2.add(added);
+		assertEquals(List.of(added), node2.subtrees());
+	}
+
+	@Test
+	public void testDroppingManySubtreesIsLinear() {
+		// LinkedMultiTreeNode used to scan the sibling list for every drop
+		TreeNode<String> wide = createTreeNode(ROOT_DATA);
+		List<TreeNode<String>> children = new ArrayList<>();
+		for (int i = 0; i < 100_000; i++) {
+			TreeNode<String> child = createTreeNode(NODE_DATA_1);
+			children.add(child);
+			wide.add(child);
+		}
+		assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
+			for (int i = children.size() - 1; i >= 0; i--) {
+				assertTrue(wide.dropSubtree(children.get(i)));
+			}
+		});
+		assertTrue(wide.isLeaf());
+	}
+
 }

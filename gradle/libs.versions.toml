@@ -1,0 +1,28 @@
+[versions]
+
+junit = "6.1.3"
+
+benmanesVersions = "0.67.0"
+jacoco = "0.8.16"
+jacocolog = "4.0.3"
+simonhauckRelease = "1.5.1"
+palantirGitVersion = "5.2.0"
+vanniktechPublish = "0.37.0"
+# palantir git-version uses Guava without declaring it; Gradle >= 9.8 no longer leaks it
+guava = "33.8.0-jre"
+
+[libraries]
+
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+
+[plugins]
+
+versions = { id = "io.github.ben-manes.versions", version.ref = "benmanesVersions" }
+jacocolog = { id = "org.barfuin.gradle.jacocolog", version.ref = "jacocolog" }
+release = { id = "io.github.simonhauck.release", version.ref = "simonhauckRelease" }
+git-version = { id = "com.palantir.git-version", version.ref = "palantirGitVersion" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktechPublish" }

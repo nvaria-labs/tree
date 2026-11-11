@@ -1,0 +1,34 @@
+name: Build gradle jar
+on:
+  push:
+    branches:
+      - "feature/*"
+
+jobs:
+  build:
+
+    name: Build image
+    runs-on: ubuntu-latest
+    container:
+      image: registry.nvaria.cloud/ubuntu-act-jdk25:latest
+      credentials:
+        username: ${{ secrets.DOCKERUSER }}
+        password: ${{ secrets.DOCKERPW }}
+    env:
+      RUNNER_TOOL_CACHE: /toolcache
+      NEXUS_MVN_RELEASE: ${{ vars.NEXUS_MVN_RELEASE  }}
+      NEXUS_MVN_SNAPSHOTS: ${{ vars.NEXUS_MVN_SNAPSHOTS }}
+      NEXUS_USER: ${{ secrets.DOCKERUSER }}
+      NEXUS_PW: ${{ secrets.DOCKERPW }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build with Gradle
+        run:  gradle build --no-daemon
+      - name: Publish to nexus
+        run:  gradle publishMavenPublicationToMaven-snapshotsRepository --no-daemon
+
+
+
+
+
+

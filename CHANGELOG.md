@@ -1,3 +1,10 @@
+# 0.3.0
+
+1. Forked from Scalified/tree; Maven group changed to `ch.nvaria`
+2. Requires Java 21
+3. Build: Gradle 9.9, version catalog, single-module layout, Gitea workflows (Travis removed)
+4. Tests migrated from JUnit 4 to JUnit 6
+5. Added NOTICE crediting Scalified
 
 # 0.2.4
 

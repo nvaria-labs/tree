@@ -1,6 +1,13 @@
 .idea
 .gradle
-build
+**/build/
+!src/**/build/
+bin/
+.kotlin
 
 .metadata
 *.DS_Store
+*.class
+*.log
+hs_err_pid*
+replay_pid*

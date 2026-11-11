@@ -26,7 +26,7 @@ import java.util.HashSet;
 /**
  * This class represents the K-ary (multiple node) tree data
  * structure
- * <h1>Definition</h1>
+ * <h2>Definition</h2>
  * <p>
  * <b>K-ary tree</b> - tree, in which each node has no more than k subtrees
  *

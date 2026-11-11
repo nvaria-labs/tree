@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This interface represents the basic tree data structure
- * <h1>Definition</h1>
+ * <h2>Definition</h2>
  * A tree data structure can be defined recursively (locally) as a collection of nodes
  * (starting at a root node), where each node is a data structure consisting of a value,
  * together with a list of references to nodes (the children), with the constraints that
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * without having any cycle. The tree with no nodes is called the <b>null</b> or
  * <b>empty</b> tree. A tree that is not empty consists of a root node and potentially many
  * levels of additional nodes that form a hierarchy
- * <h1>Terminology</h1>
+ * <h2>Terminology</h2>
  * <ul>
  *     <li><b>Node</b> - a single point of a tree</li>
  *     <li><b>Edge</b> - line, which connects two distinct nodes</li>

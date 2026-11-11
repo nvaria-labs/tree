@@ -17,7 +17,9 @@
 package com.scalified.tree.multinode;
 
 import com.scalified.tree.TreeNode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author shell
@@ -52,10 +54,12 @@ public class ArrayMultiTreeNodeTest extends MultiTreeNodeTest {
 		return new ArrayMultiTreeNode<>(data, branchingFactor);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testIncorrectBranchingFactor() {
-		int incorrectBranchingFactor = -10;
-		createTreeNode(ROOT_DATA, incorrectBranchingFactor);
+		assertThrows(IllegalArgumentException.class, () -> {
+			int incorrectBranchingFactor = -10;
+			createTreeNode(ROOT_DATA, incorrectBranchingFactor);
+		});
 	}
 
 }

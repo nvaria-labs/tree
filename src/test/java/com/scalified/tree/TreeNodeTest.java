@@ -16,12 +16,12 @@
 
 package com.scalified.tree;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author shell
@@ -71,7 +71,7 @@ public abstract class TreeNodeTest {
 
 	protected abstract <T> TreeNode<T> createTreeNode(T data);
 
-	@Before
+	@BeforeEach
 	public void buildTree() {
 		// Create tree nodes
 		root = createTreeNode(ROOT_DATA);
@@ -103,10 +103,10 @@ public abstract class TreeNodeTest {
 	public void testData() {
 		// Test data is correctly populated
 		String message = "Data object stored in tree node and data object queried from tree node are different";
-		assertEquals(message, ROOT_DATA, root.data());
-		assertEquals(message, NODE_DATA_1, node1.data());
-		assertEquals(message, NODE_DATA_4, node4.data());
-		assertNull(message, node7.data());
+		assertEquals(ROOT_DATA, root.data(), message);
+		assertEquals(NODE_DATA_1, node1.data(), message);
+		assertEquals(NODE_DATA_4, node4.data(), message);
+		assertNull(node7.data(), message);
 	}
 
 	@Test
@@ -116,30 +116,30 @@ public abstract class TreeNodeTest {
 				"tree node, but actually was not";
 		assertEquals(ROOT_DATA, root.data());
 		root.setData(ANOTHER_NODE_DATA);
-		assertEquals(message, ANOTHER_NODE_DATA, root.data());
+		assertEquals(ANOTHER_NODE_DATA, root.data(), message);
 	}
 
 	@Test
 	public void testRoot() {
 		// Test root tree node is correctly determined
 		String message = "Root node was incorrectly determined";
-		assertEquals(message, root, root);
-		assertEquals(message, root, node1.root());
-		assertEquals(message, root, node4.root());
-		assertEquals(message, root, node7.root());
-		assertEquals(message, root, node10.root());
+		assertEquals(root, root, message);
+		assertEquals(root, node1.root(), message);
+		assertEquals(root, node4.root(), message);
+		assertEquals(root, node7.root(), message);
+		assertEquals(root, node10.root(), message);
 	}
 
 	@Test
 	public void testIsRoot() {
 		// Test if root tree node is root tree node
 		String messageRootExpected = "The tree node was expected to be root, but actually was not";
-		assertTrue(messageRootExpected, root.isRoot());
+		assertTrue(root.isRoot(), messageRootExpected);
 
 		// Test if non root tree node is non root tree node
 		String messageRootNotExpected = "The tree node was not expected to be root, but actually was";
-		assertFalse(messageRootNotExpected, node2.isRoot());
-		assertFalse(messageRootNotExpected, node6.isRoot());
+		assertFalse(node2.isRoot(), messageRootNotExpected);
+		assertFalse(node6.isRoot(), messageRootNotExpected);
 	}
 
 	@Test
@@ -147,16 +147,16 @@ public abstract class TreeNodeTest {
 		// Test if parent tree node is correctly determined
 		String message = "Parent node was incorrectly determined";
 
-		assertNull(message, root.parent());
-		assertEquals(message, root, node1.parent());
-		assertEquals(message, node3, node4.parent());
-		assertEquals(message, node5, node6.parent());
-		assertEquals(message, node9, node10.parent());
+		assertNull(root.parent(), message);
+		assertEquals(root, node1.parent(), message);
+		assertEquals(node3, node4.parent(), message);
+		assertEquals(node5, node6.parent(), message);
+		assertEquals(node9, node10.parent(), message);
 
 		// Test if non parent tree node is non parent tree node
-		assertNotEquals(message, node2, node5.parent());
-		assertNotEquals(message, root, node3.parent());
-		assertNotEquals(message, node7, root.parent());
+		assertNotEquals(node2, node5.parent(), message);
+		assertNotEquals(root, node3.parent(), message);
+		assertNotEquals(node7, root.parent(), message);
 	}
 
 	@Test
@@ -168,46 +168,46 @@ public abstract class TreeNodeTest {
 		mSubtreesLevel1.add(node1);
 		mSubtreesLevel1.add(node2);
 		mSubtreesLevel1.add(node9);
-		assertEquals(message, mSubtreesLevel1, root.subtrees());
+		assertEquals(mSubtreesLevel1, root.subtrees(), message);
 
 		Collection<TreeNode<String>> mSubtreesLevel2 = new HashSet<>(3);
 		mSubtreesLevel2.add(node3);
 		mSubtreesLevel2.add(node7);
 		mSubtreesLevel2.add(node8);
-		assertEquals(message, mSubtreesLevel2, node2.subtrees());
+		assertEquals(mSubtreesLevel2, node2.subtrees(), message);
 
 		Collection<TreeNode<String>> mSubtreesLevel3 = Collections.singleton(node6);
-		assertEquals(message, mSubtreesLevel3, node5.subtrees());
+		assertEquals(mSubtreesLevel3, node5.subtrees(), message);
 
-		assertEquals(message, Collections.emptySet(), node6.subtrees());
+		assertEquals(Collections.emptySet(), node6.subtrees(), message);
 	}
 
 	@Test
 	public void testIsLeaf() {
 		// Test if tree node with no subtrees is a leaf
 		String messageLeafExpected = "The tree node expected to be a leaf, but actually was not";
-		assertTrue(messageLeafExpected, node1.isLeaf());
+		assertTrue(node1.isLeaf(), messageLeafExpected);
 
 		// Test if tree node with subtrees is not a leaf
 		String messageNotLeafExpected = "The tree node was not expected to be a leaf, but actually was";
-		assertFalse(messageNotLeafExpected, root.isLeaf());
+		assertFalse(root.isLeaf(), messageNotLeafExpected);
 	}
 
 	@Test
 	public void testFind() {
 		// Test if the tree node has the searched data
 		String messageTreeNodeFoundExpected = "The tree expected to have the searched data, but actually was not";
-		assertEquals(messageTreeNodeFoundExpected, node6, node6.find(NODE_DATA_4));
-		assertEquals(messageTreeNodeFoundExpected, node7, node2.find(null));
-		assertEquals(messageTreeNodeFoundExpected, node7, node7.find(null));
-		assertEquals(messageTreeNodeFoundExpected, node5, node3.find(NODE_DATA_1));
-		assertEquals(messageTreeNodeFoundExpected, node4, root.find(NODE_DATA_4));
+		assertEquals(node6, node6.find(NODE_DATA_4), messageTreeNodeFoundExpected);
+		assertEquals(node7, node2.find(null), messageTreeNodeFoundExpected);
+		assertEquals(node7, node7.find(null), messageTreeNodeFoundExpected);
+		assertEquals(node5, node3.find(NODE_DATA_1), messageTreeNodeFoundExpected);
+		assertEquals(node4, root.find(NODE_DATA_4), messageTreeNodeFoundExpected);
 
 		// Test if the tree node does not have the searched data
 		String messageTreeNodeNotFoundExpected =
 				"The tree with the searched data was not expected to be found, but actually was";
-		assertNull(messageTreeNodeNotFoundExpected, node6.find("data"));
-		assertNull(messageTreeNodeNotFoundExpected, root.find("data"));
+		assertNull(node6.find("data"), messageTreeNodeNotFoundExpected);
+		assertNull(root.find("data"), messageTreeNodeNotFoundExpected);
 	}
 
 	@Test
@@ -215,9 +215,9 @@ public abstract class TreeNodeTest {
 		// Test if the tree has a single tree node with the searched data
 		String messageSingletonCollectionFoundExpected =
 				"The single tree node was expected to have the searched data, but actually was not";
-		assertEquals(messageSingletonCollectionFoundExpected, Collections.singleton(node6), node6.findAll(NODE_DATA_4));
-		assertEquals(messageSingletonCollectionFoundExpected, Collections.singleton(node7), node7.findAll(null));
-		assertEquals(messageSingletonCollectionFoundExpected, Collections.singleton(node2), root.findAll(NODE_DATA_2));
+		assertEquals(Collections.singleton(node6), node6.findAll(NODE_DATA_4), messageSingletonCollectionFoundExpected);
+		assertEquals(Collections.singleton(node7), node7.findAll(null), messageSingletonCollectionFoundExpected);
+		assertEquals(Collections.singleton(node2), root.findAll(NODE_DATA_2), messageSingletonCollectionFoundExpected);
 
 		// Test if the tree has more than one node with the searched data
 		String messageCollectionFoundExpected =
@@ -226,13 +226,13 @@ public abstract class TreeNodeTest {
 		expectedMany.add(node4);
 		expectedMany.add(node6);
 		expectedMany.add(node9);
-		assertEquals(messageCollectionFoundExpected, expectedMany, root.findAll(NODE_DATA_4));
+		assertEquals(expectedMany, root.findAll(NODE_DATA_4), messageCollectionFoundExpected);
 
 
 		// Test if the tree does not have any tree node with the searched data
 		String messageEmptyCollectionFoundExpected =
 				"Three tree nodes with the searched data was not expected to be found, but actually was";
-		assertEquals(messageEmptyCollectionFoundExpected, Collections.emptySet(), node10.findAll("data"));
+		assertEquals(Collections.emptySet(), node10.findAll("data"), messageEmptyCollectionFoundExpected);
 	}
 
 	@Test
@@ -240,18 +240,18 @@ public abstract class TreeNodeTest {
 		// Test if tree node has the specified subtree
 		String messageSubtreeExpected =
 				"The tree node was expected to have the specified subtree, but actually was not";
-		assertTrue(messageSubtreeExpected, root.hasSubtree(node1));
-		assertTrue(messageSubtreeExpected, root.hasSubtree(node9));
-		assertTrue(messageSubtreeExpected, node2.hasSubtree(node7));
-		assertTrue(messageSubtreeExpected, node5.hasSubtree(node6));
+		assertTrue(root.hasSubtree(node1), messageSubtreeExpected);
+		assertTrue(root.hasSubtree(node9), messageSubtreeExpected);
+		assertTrue(node2.hasSubtree(node7), messageSubtreeExpected);
+		assertTrue(node5.hasSubtree(node6), messageSubtreeExpected);
 
 		// Test if tree node does not have the specified subtree
 		String messageSubtreeNotExpected =
 				"The tree node was not expected to have the specified subtree, but actually was";
-		assertFalse(messageSubtreeNotExpected, node1.hasSubtree(node10));
-		assertFalse(messageSubtreeNotExpected, node5.hasSubtree(null));
-		assertFalse(messageSubtreeNotExpected, node2.hasSubtree(root));
-		assertFalse(messageSubtreeNotExpected, root.hasSubtree(node7));
+		assertFalse(node1.hasSubtree(node10), messageSubtreeNotExpected);
+		assertFalse(node5.hasSubtree(null), messageSubtreeNotExpected);
+		assertFalse(node2.hasSubtree(root), messageSubtreeNotExpected);
+		assertFalse(root.hasSubtree(node7), messageSubtreeNotExpected);
 	}
 
 	@Test
@@ -260,33 +260,33 @@ public abstract class TreeNodeTest {
 		String messageDropExpected = "The subtree was expected to be dropped, but actually was not";
 		String messageDropResultTrueExpected =
 				"The subtree drop result was expected to be true, but actually was false";
-		assertTrue(messageDropResultTrueExpected, node3.dropSubtree(node5));
-		assertFalse(messageDropExpected, node3.contains(node5));
-		assertFalse(messageDropExpected, node3.contains(node6));
-		assertTrue(messageDropResultTrueExpected, root.dropSubtree(node9));
-		assertFalse(messageDropExpected, root.contains(node9));
-		assertFalse(messageDropExpected, root.contains(node10));
+		assertTrue(node3.dropSubtree(node5), messageDropResultTrueExpected);
+		assertFalse(node3.contains(node5), messageDropExpected);
+		assertFalse(node3.contains(node6), messageDropExpected);
+		assertTrue(root.dropSubtree(node9), messageDropResultTrueExpected);
+		assertFalse(root.contains(node9), messageDropExpected);
+		assertFalse(root.contains(node10), messageDropExpected);
 
 		// Test if subtree is not dropped
 		String messageDropNotExpected = "The subtree was not expected to be dropped, but actually was";
 		String messageDropResultFalseExpected =
 				"The subtree drop result was expected to be false, but actually was true";
-		assertFalse(messageDropResultFalseExpected, node1.dropSubtree(node2));
-		assertTrue(messageDropNotExpected, root.contains(node1));
-		assertTrue(messageDropNotExpected, root.contains(node2));
-		assertFalse(messageDropResultFalseExpected, node2.dropSubtree(null));
-		assertTrue(messageDropNotExpected, root.contains(node2));
-		assertFalse(messageDropResultFalseExpected, node1.dropSubtree(root));
-		assertTrue(messageDropNotExpected, root.contains(node1));
+		assertFalse(node1.dropSubtree(node2), messageDropResultFalseExpected);
+		assertTrue(root.contains(node1), messageDropNotExpected);
+		assertTrue(root.contains(node2), messageDropNotExpected);
+		assertFalse(node2.dropSubtree(null), messageDropResultFalseExpected);
+		assertTrue(root.contains(node2), messageDropNotExpected);
+		assertFalse(node1.dropSubtree(root), messageDropResultFalseExpected);
+		assertTrue(root.contains(node1), messageDropNotExpected);
 
 		// Test if there are equal subtrees only first is dropped
 		TreeNode<String> mAnotherNode1 = createTreeNode(ANOTHER_NODE_DATA);
 		TreeNode<String> mAnotherNode2 = createTreeNode(ANOTHER_NODE_DATA);
 		node1.add(mAnotherNode1);
 		node1.add(mAnotherNode2);
-		assertTrue(messageDropExpected, node1.remove(mAnotherNode1));
-		assertFalse(messageDropNotExpected, node1.contains(mAnotherNode1));
-		assertTrue(messageDropNotExpected, node1.contains(mAnotherNode2));
+		assertTrue(node1.remove(mAnotherNode1), messageDropExpected);
+		assertFalse(node1.contains(mAnotherNode1), messageDropNotExpected);
+		assertTrue(node1.contains(mAnotherNode2), messageDropNotExpected);
 	}
 
 	@Test
@@ -295,20 +295,20 @@ public abstract class TreeNodeTest {
 		String messageContainExpected =
 				"The tree node was expected to contain the specified node, but actually was not";
 
-		assertTrue(messageContainExpected, root.contains(node2));
-		assertTrue(messageContainExpected, root.contains(node6));
-		assertTrue(messageContainExpected, node3.contains(node4));
-		assertTrue(messageContainExpected, node2.contains(node5));
+		assertTrue(root.contains(node2), messageContainExpected);
+		assertTrue(root.contains(node6), messageContainExpected);
+		assertTrue(node3.contains(node4), messageContainExpected);
+		assertTrue(node2.contains(node5), messageContainExpected);
 
 		// Test if tree node does not contain the specified tree node
 		String messageNotContainExpected =
 				"The tree node was not expected to contain the specified tree node, but actually was";
 
-		assertFalse(messageNotContainExpected, root.contains(root));
-		assertFalse(messageNotContainExpected, node4.contains(node3));
-		assertFalse(messageNotContainExpected, node2.contains(null));
-		assertFalse(messageNotContainExpected, node3.contains(root));
-		assertFalse(messageNotContainExpected, root.contains(anotherNode));
+		assertFalse(root.contains(root), messageNotContainExpected);
+		assertFalse(node4.contains(node3), messageNotContainExpected);
+		assertFalse(node2.contains(null), messageNotContainExpected);
+		assertFalse(node3.contains(root), messageNotContainExpected);
+		assertFalse(root.contains(anotherNode), messageNotContainExpected);
 	}
 
 	@Test
@@ -320,7 +320,7 @@ public abstract class TreeNodeTest {
 		Collection<TreeNode<String>> mTreeNodesContain1 = new ArrayList<>(2);
 		mTreeNodesContain1.add(node3);
 		mTreeNodesContain1.add(node6);
-		assertTrue(messageContainExpected, node2.containsAll(mTreeNodesContain1));
+		assertTrue(node2.containsAll(mTreeNodesContain1), messageContainExpected);
 
 		Collection<TreeNode<String>> mTreeNodesContain2 = new ArrayList<>(6);
 		mTreeNodesContain2.add(node8);
@@ -329,10 +329,10 @@ public abstract class TreeNodeTest {
 		mTreeNodesContain2.add(node9);
 		mTreeNodesContain2.add(node10);
 		mTreeNodesContain2.add(node6);
-		assertTrue(messageContainExpected, root.containsAll(mTreeNodesContain2));
+		assertTrue(root.containsAll(mTreeNodesContain2), messageContainExpected);
 
 		List<TreeNode<String>> mTreeNodesContain3 = Collections.singletonList(node3);
-		assertTrue(messageContainExpected, node2.containsAll(mTreeNodesContain3));
+		assertTrue(node2.containsAll(mTreeNodesContain3), messageContainExpected);
 
 		// Test if tree node does not contain at least one of the specified tree nodes
 		String messageContainNotExpected =
@@ -342,21 +342,21 @@ public abstract class TreeNodeTest {
 		mTreeNodesNotContain1.add(node5);
 		mTreeNodesNotContain1.add(node10);
 		mTreeNodesNotContain1.add(anotherNode);
-		assertFalse(messageContainNotExpected, node1.containsAll(mTreeNodesNotContain1));
-		assertFalse(messageContainNotExpected, root.containsAll(mTreeNodesNotContain1));
+		assertFalse(node1.containsAll(mTreeNodesNotContain1), messageContainNotExpected);
+		assertFalse(root.containsAll(mTreeNodesNotContain1), messageContainNotExpected);
 
 		Collection<TreeNode<String>> mTreeNodesNotContain2 = new ArrayList<>(2);
 		mTreeNodesNotContain2.add(root);
 		mTreeNodesNotContain2.add(node2);
-		assertFalse(messageContainNotExpected, root.containsAll(mTreeNodesNotContain2));
+		assertFalse(root.containsAll(mTreeNodesNotContain2), messageContainNotExpected);
 
 		Collection<TreeNode<String>> mTreeNodesNotContain3 = new ArrayList<>(2);
 		mTreeNodesNotContain3.add(node6);
 		mTreeNodesNotContain3.add(anotherNode);
-		assertFalse(messageContainNotExpected, node3.containsAll(mTreeNodesNotContain3));
+		assertFalse(node3.containsAll(mTreeNodesNotContain3), messageContainNotExpected);
 
-		assertFalse(messageContainNotExpected, root.containsAll(null));
-		assertFalse(messageContainNotExpected, node3.containsAll(Collections.<TreeNode<String>>emptyList()));
+		assertFalse(root.containsAll(null), messageContainNotExpected);
+		assertFalse(node3.containsAll(Collections.<TreeNode<String>>emptyList()), messageContainNotExpected);
 	}
 
 	@Test
@@ -364,12 +364,12 @@ public abstract class TreeNodeTest {
 		// Test tree node is successfully added
 		String messageAddExpected = "The tree node was expected to be added, but actually was not";
 		String messageAddResultTrueExpected = "The addition result was expected to be true, but actually was false";
-		assertTrue(messageAddResultTrueExpected, node1.add(anotherNode));
-		assertTrue(messageAddExpected, node1.contains(anotherNode));
+		assertTrue(node1.add(anotherNode), messageAddResultTrueExpected);
+		assertTrue(node1.contains(anotherNode), messageAddExpected);
 
 		// Test tree node is not added
 		String messageAddResultFalseExpected = "The addition result was expected to be false, but actually was true";
-		assertFalse(messageAddResultFalseExpected, node2.add(null));
+		assertFalse(node2.add(null), messageAddResultFalseExpected);
 	}
 
 	@Test
@@ -378,7 +378,7 @@ public abstract class TreeNodeTest {
 		String messageClearedExpected = "The tree node was expected to be cleared, but actually was not";
 
 		node6.clear();
-		assertTrue(messageClearedExpected, node6.isLeaf());
+		assertTrue(node6.isLeaf(), messageClearedExpected);
 
 		assertFalse(node3.isLeaf());
 		node3.clear();
@@ -408,11 +408,11 @@ public abstract class TreeNodeTest {
 		String messageRemoveResultTrueExpected =
 				"The tree node remove result was expected to be true, but actually was false";
 
-		assertTrue(messageRemoveResultTrueExpected, node3.remove(node4));
-		assertFalse(messageRemoveExpected, node3.contains(node4));
-		assertTrue(messageRemoveResultTrueExpected, root.remove(node9));
-		assertFalse(messageRemoveExpected, root.contains(node9));
-		assertFalse(messageRemoveExpected, root.contains(node10));
+		assertTrue(node3.remove(node4), messageRemoveResultTrueExpected);
+		assertFalse(node3.contains(node4), messageRemoveExpected);
+		assertTrue(root.remove(node9), messageRemoveResultTrueExpected);
+		assertFalse(root.contains(node9), messageRemoveExpected);
+		assertFalse(root.contains(node10), messageRemoveExpected);
 
 		// Test nonexistent tree node is not removed
 		String messageRemoveNotExpected = "The tree node was not expected to be removed, but actually was";
@@ -420,21 +420,21 @@ public abstract class TreeNodeTest {
 				"The tree node remove result was expected to be false, but actually was true";
 
 		assertFalse(root.contains(anotherNode));
-		assertFalse(messageRemoveResultFalseExpected, root.remove(anotherNode));
-		assertFalse(messageRemoveNotExpected, root.contains(anotherNode));
-		assertFalse(messageRemoveResultFalseExpected, node7.remove(node6));
-		assertFalse(messageRemoveResultFalseExpected, node1.remove(null));
-		assertFalse(messageRemoveResultFalseExpected, node1.remove(root));
+		assertFalse(root.remove(anotherNode), messageRemoveResultFalseExpected);
+		assertFalse(root.contains(anotherNode), messageRemoveNotExpected);
+		assertFalse(node7.remove(node6), messageRemoveResultFalseExpected);
+		assertFalse(node1.remove(null), messageRemoveResultFalseExpected);
+		assertFalse(node1.remove(root), messageRemoveResultFalseExpected);
 
 		// Test if there are equal nodes only first is removed
 		TreeNode<String> mNodeToRemove1 = createTreeNode(ANOTHER_NODE_DATA);
 		TreeNode<String> mNodeToRemove2 = createTreeNode(ANOTHER_NODE_DATA);
 		node1.add(mNodeToRemove1);
 		node1.add(mNodeToRemove2);
-		assertTrue(messageRemoveResultTrueExpected, root.remove(mNodeToRemove1));
-		assertFalse(messageRemoveExpected, root.contains(mNodeToRemove1));
-		assertTrue(messageRemoveNotExpected, root.contains(mNodeToRemove2));
-		assertTrue(messageRemoveNotExpected, node1.contains(mNodeToRemove2));
+		assertTrue(root.remove(mNodeToRemove1), messageRemoveResultTrueExpected);
+		assertFalse(root.contains(mNodeToRemove1), messageRemoveExpected);
+		assertTrue(root.contains(mNodeToRemove2), messageRemoveNotExpected);
+		assertTrue(node1.contains(mNodeToRemove2), messageRemoveNotExpected);
 	}
 
 	@Test
@@ -448,23 +448,23 @@ public abstract class TreeNodeTest {
 		mNodesToRemove1.add(node6);
 		mNodesToRemove1.add(node7);
 		mNodesToRemove1.add(node10);
-		assertTrue(messageRemoveResultTrueExpected, root.removeAll(mNodesToRemove1));
-		assertFalse(messageRemoveExpected, root.contains(node6));
-		assertFalse(messageRemoveExpected, root.contains(node7));
-		assertFalse(messageRemoveExpected, root.contains(node10));
+		assertTrue(root.removeAll(mNodesToRemove1), messageRemoveResultTrueExpected);
+		assertFalse(root.contains(node6), messageRemoveExpected);
+		assertFalse(root.contains(node7), messageRemoveExpected);
+		assertFalse(root.contains(node10), messageRemoveExpected);
 
 		Collection<TreeNode<String>> mNodesToRemove2 = Collections.singletonList(node4);
-		assertTrue(messageRemoveResultTrueExpected, node2.removeAll(mNodesToRemove2));
-		assertFalse(messageRemoveExpected, node2.contains(node4));
-		assertFalse(messageRemoveExpected, node3.contains(node4));
+		assertTrue(node2.removeAll(mNodesToRemove2), messageRemoveResultTrueExpected);
+		assertFalse(node2.contains(node4), messageRemoveExpected);
+		assertFalse(node3.contains(node4), messageRemoveExpected);
 
 		// Test only the tree nodes, which belongs to the current tree are removed
 		Collection<TreeNode<String>> mNodesToRemove3 = new ArrayList<>(2);
 		mNodesToRemove3.add(node8);
 		mNodesToRemove3.add(anotherNode);
-		assertTrue(messageRemoveResultTrueExpected, node2.removeAll(mNodesToRemove3));
-		assertFalse(messageRemoveResultTrueExpected, node2.contains(node8));
-		assertFalse(messageRemoveResultTrueExpected, root.contains(node8));
+		assertTrue(node2.removeAll(mNodesToRemove3), messageRemoveResultTrueExpected);
+		assertFalse(node2.contains(node8), messageRemoveResultTrueExpected);
+		assertFalse(root.contains(node8), messageRemoveResultTrueExpected);
 
 		// Test nonexistent tree node is not removed
 		String messageRemoveResultFalseExpected =
@@ -474,10 +474,10 @@ public abstract class TreeNodeTest {
 		Collection<TreeNode<String>> mNodesToRemove4 = new ArrayList<>(2);
 		mNodesToRemove4.add(node7);
 		mNodesToRemove4.add(anotherNode);
-		assertFalse(messageRemoveResultFalseExpected, root.removeAll(mNodesToRemove4));
-		assertFalse(messageRemoveResultFalseExpected, node1.removeAll(mNodesToRemove4));
-		assertFalse(messageRemoveResultFalseExpected, node2.removeAll(null));
-		assertFalse(messageRemoveResultFalseExpected, root.removeAll(Collections.<TreeNode<String>>emptyList()));
+		assertFalse(root.removeAll(mNodesToRemove4), messageRemoveResultFalseExpected);
+		assertFalse(node1.removeAll(mNodesToRemove4), messageRemoveResultFalseExpected);
+		assertFalse(node2.removeAll(null), messageRemoveResultFalseExpected);
+		assertFalse(root.removeAll(Collections.<TreeNode<String>>emptyList()), messageRemoveResultFalseExpected);
 	}
 
 	@Test
@@ -487,7 +487,7 @@ public abstract class TreeNodeTest {
 		final Collection<TreeNode<String>> mPreOrderedActual = new ArrayList<>(10);
 		TraversalAction<TreeNode<String>> action = populateCollectionAction(mPreOrderedActual);
 		root.traversePreOrder(action);
-		assertEquals(message, preOrderedExpected(), mPreOrderedActual);
+		assertEquals(preOrderedExpected(), mPreOrderedActual, message);
 	}
 
 	private Collection<TreeNode<String>> preOrderedExpected() {
@@ -514,7 +514,7 @@ public abstract class TreeNodeTest {
 		final Collection<TreeNode<String>> mPostOrderedActual = new ArrayList<>(10);
 		TraversalAction<TreeNode<String>> action = populateCollectionAction(mPostOrderedActual);
 		root.traversePostOrder(action);
-		assertEquals(message, postOrderedExpected(), mPostOrderedActual);
+		assertEquals(postOrderedExpected(), mPostOrderedActual, message);
 	}
 
 	private Collection<TreeNode<String>> postOrderedExpected() {
@@ -553,16 +553,16 @@ public abstract class TreeNodeTest {
 	public void testPreOrdered() {
 		// Test tree pre ordered collection is correct
 		String message = "Tree was incorrectly pre ordered";
-		assertEquals(message, preOrderedExpected(), root.preOrdered());
-		assertEquals(message, Collections.singleton(node10), node10.preOrdered());
+		assertEquals(preOrderedExpected(), root.preOrdered(), message);
+		assertEquals(Collections.singleton(node10), node10.preOrdered(), message);
 	}
 
 	@Test
 	public void testPostOrdered() {
 		// Test tree post ordered collection is correct
 		String message = "Tree was incorrectly post ordered";
-		assertEquals(message, postOrderedExpected(), root.postOrdered());
-		assertEquals(message, Collections.singleton(node1), node1.postOrdered());
+		assertEquals(postOrderedExpected(), root.postOrdered(), message);
+		assertEquals(Collections.singleton(node1), node1.postOrdered(), message);
 	}
 
 	@Test
@@ -576,64 +576,76 @@ public abstract class TreeNodeTest {
 		mPath1.add(node3);
 		mPath1.add(node5);
 		mPath1.add(node6);
-		assertEquals(message, mPath1, root.path(node6));
+		assertEquals(mPath1, root.path(node6), message);
 
 		Collection<TreeNode<String>> mPath2 = new LinkedList<>();
 		mPath2.add(node2);
 		mPath2.add(node8);
-		assertEquals(message, mPath2, node2.path(node8));
+		assertEquals(mPath2, node2.path(node8), message);
 
-		assertEquals(message, Collections.singletonList(node10), node10.path(node9));
-		assertEquals(message, Collections.singletonList(node9), node9.path(null));
-		assertEquals(message, Collections.singletonList(node2), node2.path(node2));
+		assertEquals(Collections.singletonList(node10), node10.path(node9), message);
+		assertEquals(Collections.singletonList(node9), node9.path(null), message);
+		assertEquals(Collections.singletonList(node2), node2.path(node2), message);
 	}
 
-	@Test(expected = TreeNodeException.class)
+	@Test
 	public void testPathToRootException() {
-		// Test path to root tree node throws exception
-		node3.path(root);
+		assertThrows(TreeNodeException.class, () -> {
+			// Test path to root tree node throws exception
+			node3.path(root);
+		});
 	}
 
-	@Test(expected = TreeNodeException.class)
+	@Test
 	public void testPathToNonExistentNodeException() {
-		// Test path to non descendant / non existent tree node throws exception
-		node2.path(node1);
+		assertThrows(TreeNodeException.class, () -> {
+			// Test path to non descendant / non existent tree node throws exception
+			node2.path(node1);
+		});
 	}
 
 	@Test
 	public void testCommonAncestor() {
 		// Test common ancestor tree node was incorrectly determined
 		String message = "The common ancestor between nodes was incorrectly determined";
-		assertEquals(message, root, node2.commonAncestor(node10));
-		assertEquals(message, node2, node6.commonAncestor(node8));
-		assertEquals(message, node3, node4.commonAncestor(node5));
-		assertEquals(message, root, node1.commonAncestor(node2));
-		assertEquals(message, root, node2.commonAncestor(node2));
+		assertEquals(root, node2.commonAncestor(node10), message);
+		assertEquals(node2, node6.commonAncestor(node8), message);
+		assertEquals(node3, node4.commonAncestor(node5), message);
+		assertEquals(root, node1.commonAncestor(node2), message);
+		assertEquals(root, node2.commonAncestor(node2), message);
 	}
 
-	@Test(expected = TreeNodeException.class)
+	@Test
 	public void testCommonAncestorNullNodeException() {
-		// Test common ancestor of the current tree node and null node throws exception
-		node1.commonAncestor(null);
+		assertThrows(TreeNodeException.class, () -> {
+			// Test common ancestor of the current tree node and null node throws exception
+			node1.commonAncestor(null);
+		});
 	}
 
-	@Test(expected = TreeNodeException.class)
+	@Test
 	public void testCommonAncestorNonExistentNodeException() {
-		// Test common ancestor of the current tree node and non existent tree node throws exception
-		assertFalse(root.contains(anotherNode));
-		node2.commonAncestor(anotherNode);
+		assertThrows(TreeNodeException.class, () -> {
+			// Test common ancestor of the current tree node and non existent tree node throws exception
+			assertFalse(root.contains(anotherNode));
+			node2.commonAncestor(anotherNode);
+		});
 	}
 
-	@Test(expected = TreeNodeException.class)
+	@Test
 	public void testCommonAncestorCurrentNodeIsRootException() {
-		// Test common ancestor of the root tree node and non root tree node trows exception
-		root.commonAncestor(node1);
+		assertThrows(TreeNodeException.class, () -> {
+			// Test common ancestor of the root tree node and non root tree node trows exception
+			root.commonAncestor(node1);
+		});
 	}
 
-	@Test(expected = TreeNodeException.class)
+	@Test
 	public void testCommonAncestorNodeIsRootException() {
-		// Test common ancestor of the non root tree node and the root tree node trows exception
-		node2.commonAncestor(root);
+		assertThrows(TreeNodeException.class, () -> {
+			// Test common ancestor of the non root tree node and the root tree node trows exception
+			node2.commonAncestor(root);
+		});
 	}
 
 	@Test
@@ -642,18 +654,18 @@ public abstract class TreeNodeTest {
 		String messageTrue =
 				"The specified tree node was expected to be the sibling of the current tree node, " +
 						"but actually was not";
-		assertTrue(messageTrue, node1.isSiblingOf(node9));
-		assertTrue(messageTrue, node1.isSiblingOf(node2));
-		assertTrue(messageTrue, node5.isSiblingOf(node4));
+		assertTrue(node1.isSiblingOf(node9), messageTrue);
+		assertTrue(node1.isSiblingOf(node2), messageTrue);
+		assertTrue(node5.isSiblingOf(node4), messageTrue);
 
 		// Test the specified tree node is not the sibling of the current tree node
 		String messageFalse =
 				"The specified tree node was not expected to be the sibling of the current tree node, " +
 						"but actually was";
-		assertFalse(messageFalse, node2.isSiblingOf(null));
-		assertFalse(messageFalse, root.isSiblingOf(node5));
-		assertFalse(messageFalse, node4.isSiblingOf(root));
-		assertFalse(messageFalse, node5.isSiblingOf(node10));
+		assertFalse(node2.isSiblingOf(null), messageFalse);
+		assertFalse(root.isSiblingOf(node5), messageFalse);
+		assertFalse(node4.isSiblingOf(root), messageFalse);
+		assertFalse(node5.isSiblingOf(node10), messageFalse);
 	}
 
 	@Test
@@ -662,20 +674,20 @@ public abstract class TreeNodeTest {
 		String messageTrue =
 				"The specified tree node was expected to be the ancestor of the current tree node, " +
 						"but actually was not";
-		assertTrue(messageTrue, root.isAncestorOf(node1));
-		assertTrue(messageTrue, root.isAncestorOf(node8));
-		assertTrue(messageTrue, node2.isAncestorOf(node6));
-		assertTrue(messageTrue, node9.isAncestorOf(node10));
+		assertTrue(root.isAncestorOf(node1), messageTrue);
+		assertTrue(root.isAncestorOf(node8), messageTrue);
+		assertTrue(node2.isAncestorOf(node6), messageTrue);
+		assertTrue(node9.isAncestorOf(node10), messageTrue);
 
 		// Test the specified tree node is not the ancestor of the current tree node
 		String messageFalse =
 				"The specified tree node was not expected to be the ancestor of the current tree node, " +
 						"but actually was";
-		assertFalse(messageFalse, node10.isAncestorOf(node9));
-		assertFalse(messageFalse, node9.isAncestorOf(null));
-		assertFalse(messageFalse, node2.isAncestorOf(root));
-		assertFalse(messageFalse, node1.isAncestorOf(node1));
-		assertFalse(messageFalse, node3.isAncestorOf(anotherNode));
+		assertFalse(node10.isAncestorOf(node9), messageFalse);
+		assertFalse(node9.isAncestorOf(null), messageFalse);
+		assertFalse(node2.isAncestorOf(root), messageFalse);
+		assertFalse(node1.isAncestorOf(node1), messageFalse);
+		assertFalse(node3.isAncestorOf(anotherNode), messageFalse);
 	}
 
 	@Test
@@ -684,51 +696,51 @@ public abstract class TreeNodeTest {
 		String messageTrue =
 				"The specified tree node was expected to be the descendant of the current tree node, " +
 						"but actually was not";
-		assertTrue(messageTrue, node6.isDescendantOf(root));
-		assertTrue(messageTrue, node3.isDescendantOf(root));
-		assertTrue(messageTrue, node5.isDescendantOf(node2));
-		assertTrue(messageTrue, node10.isDescendantOf(node9));
+		assertTrue(node6.isDescendantOf(root), messageTrue);
+		assertTrue(node3.isDescendantOf(root), messageTrue);
+		assertTrue(node5.isDescendantOf(node2), messageTrue);
+		assertTrue(node10.isDescendantOf(node9), messageTrue);
 
 		// Test the specified tree node is not the descendant of the current tree node
 		String messageFalse =
 				"The specified tree node was not expected to be the descendant of the current tree node, " +
 						"but actually was";
-		assertFalse(messageFalse, node3.isDescendantOf(node6));
-		assertFalse(messageFalse, node2.isDescendantOf(null));
-		assertFalse(messageFalse, root.isDescendantOf(node3));
-		assertFalse(messageFalse, node2.isDescendantOf(node1));
-		assertFalse(messageFalse, node10.isDescendantOf(node10));
+		assertFalse(node3.isDescendantOf(node6), messageFalse);
+		assertFalse(node2.isDescendantOf(null), messageFalse);
+		assertFalse(root.isDescendantOf(node3), messageFalse);
+		assertFalse(node2.isDescendantOf(node1), messageFalse);
+		assertFalse(node10.isDescendantOf(node10), messageFalse);
 	}
 
 	@Test
 	public void testSize() {
 		// Test the specified tree node size is correctly calculated
 		String message = "Tree node size was incorrectly calculated";
-		assertSame(message, 1L, node6.size());
-		assertSame(message, 2L, node9.size());
-		assertSame(message, 4L, node3.size());
-		assertSame(message, 11L, root.size());
+		assertSame(1L, node6.size(), message);
+		assertSame(2L, node9.size(), message);
+		assertSame(4L, node3.size(), message);
+		assertSame(11L, root.size(), message);
 	}
 
 	@Test
 	public void testHeight() {
 		// Test the specified tree node height is correctly calculated
 		String message = "Tree node height was incorrectly calculated";
-		assertSame(message, 0, node6.height());
-		assertSame(message, 1, node5.height());
-		assertSame(message, 3, node2.height());
-		assertSame(message, 2, node3.height());
-		assertSame(message, 4, root.height());
+		assertSame(0, node6.height(), message);
+		assertSame(1, node5.height(), message);
+		assertSame(3, node2.height(), message);
+		assertSame(2, node3.height(), message);
+		assertSame(4, root.height(), message);
 	}
 
 	@Test
 	public void testLevel() {
 		// Test the specified tree node level is correctly calculated
 		String message = "Tree node level was incorrectly calculated";
-		assertSame(message, 0, root.level());
-		assertSame(message, 2, node10.level());
-		assertSame(message, 4, node6.level());
-		assertSame(message, 3, node4.level());
+		assertSame(0, root.level(), message);
+		assertSame(2, node10.level(), message);
+		assertSame(4, node6.level(), message);
+		assertSame(3, node4.level(), message);
 	}
 
 	@Test
@@ -736,7 +748,7 @@ public abstract class TreeNodeTest {
 		// Test the tree node is correctly cloned
 		String message = "The cloned tree node was expected to be equal to the original one, but actually was not";
 		TreeNode<String> mClonedRoot = root.clone();
-		assertEquals(message, root, mClonedRoot);
+		assertEquals(root, mClonedRoot, message);
 	}
 
 	@Test
@@ -747,18 +759,18 @@ public abstract class TreeNodeTest {
 		String messageNotEqual =
 				"The specified tree node was not expected to be equal to the current tree node, but actually was";
 
-		assertEquals(messageEqual, root, root);
-		assertEquals(messageEqual, node1, node1);
-		assertEquals(messageEqual, node7, node7);
+		assertEquals(root, root, messageEqual);
+		assertEquals(node1, node1, messageEqual);
+		assertEquals(node7, node7, messageEqual);
 
-		assertNotEquals(messageNotEqual, root, node1);
-		assertNotEquals(messageNotEqual, root, node7);
-		assertNotEquals(messageNotEqual, node9, node10);
+		assertNotEquals(root, node1, messageNotEqual);
+		assertNotEquals(root, node7, messageNotEqual);
+		assertNotEquals(node9, node10, messageNotEqual);
 
 		// Test the created tree nodes with the same data are not equal
 		TreeNode<String> mAnotherNode1 = createTreeNode(ANOTHER_NODE_DATA);
 		TreeNode<String> mAnotherNode2 = createTreeNode(ANOTHER_NODE_DATA);
-		assertNotEquals(messageNotEqual, mAnotherNode1, mAnotherNode2);
+		assertNotEquals(mAnotherNode1, mAnotherNode2, messageNotEqual);
 	}
 
 	@Test
@@ -766,22 +778,22 @@ public abstract class TreeNodeTest {
 		// Test iterator next returns the correct tree node
 		String message = "Iterator returned incorrect tree node";
 		Iterator<TreeNode<String>> mIterator1 = root.iterator();
-		assertEquals(message, root, mIterator1.next());
-		assertEquals(message, node1, mIterator1.next());
-		assertEquals(message, node2, mIterator1.next());
-		assertEquals(message, node3, mIterator1.next());
-		assertEquals(message, node4, mIterator1.next());
-		assertEquals(message, node5, mIterator1.next());
-		assertEquals(message, node6, mIterator1.next());
-		assertEquals(message, node7, mIterator1.next());
-		assertEquals(message, node8, mIterator1.next());
-		assertEquals(message, node9, mIterator1.next());
-		assertEquals(message, node10, mIterator1.next());
+		assertEquals(root, mIterator1.next(), message);
+		assertEquals(node1, mIterator1.next(), message);
+		assertEquals(node2, mIterator1.next(), message);
+		assertEquals(node3, mIterator1.next(), message);
+		assertEquals(node4, mIterator1.next(), message);
+		assertEquals(node5, mIterator1.next(), message);
+		assertEquals(node6, mIterator1.next(), message);
+		assertEquals(node7, mIterator1.next(), message);
+		assertEquals(node8, mIterator1.next(), message);
+		assertEquals(node9, mIterator1.next(), message);
+		assertEquals(node10, mIterator1.next(), message);
 
 		// Test iterator works correctly for one node
 		TreeNode<String> mNode = createTreeNode(ANOTHER_NODE_DATA);
 		Iterator<TreeNode<String>> mIterator2 = mNode.iterator();
-		assertEquals(message, mNode, mIterator2.next());
+		assertEquals(mNode, mIterator2.next(), message);
 
 		// Test iterator next returns the correct tree node if there are equal subtree nodes
 		TreeNode<String> mAnotherNode1 = createTreeNode(ANOTHER_NODE_DATA);
@@ -789,9 +801,9 @@ public abstract class TreeNodeTest {
 		node1.add(mAnotherNode1);
 		node1.add(mAnotherNode2);
 		Iterator<TreeNode<String>> mIterator3 = node1.iterator();
-		assertEquals(message, node1, mIterator3.next());
-		assertEquals(message, mAnotherNode1, mIterator3.next());
-		assertEquals(message, mAnotherNode2, mIterator3.next());
+		assertEquals(node1, mIterator3.next(), message);
+		assertEquals(mAnotherNode1, mIterator3.next(), message);
+		assertEquals(mAnotherNode2, mIterator3.next(), message);
 	}
 
 	@Test
@@ -800,11 +812,11 @@ public abstract class TreeNodeTest {
 		String messageHasNextResultTrueExpected =
 				"The iterator was expected to have the next tree node, but actually was not";
 		Iterator<TreeNode<String>> mIterator1 = node3.iterator();
-		assertTrue(messageHasNextResultTrueExpected, mIterator1.hasNext());
+		assertTrue(mIterator1.hasNext(), messageHasNextResultTrueExpected);
 		mIterator1.next();
 		mIterator1.next();
 		mIterator1.next();
-		assertTrue(messageHasNextResultTrueExpected, mIterator1.hasNext());
+		assertTrue(mIterator1.hasNext(), messageHasNextResultTrueExpected);
 
 		// Test iterator must not have the next tree node
 		String messageHasNextResultFalseExpected =
@@ -812,31 +824,35 @@ public abstract class TreeNodeTest {
 		Iterator<TreeNode<String>> mIterator2 = node9.iterator();
 		mIterator2.next();
 		mIterator2.next();
-		assertFalse(messageHasNextResultFalseExpected, mIterator2.hasNext());
+		assertFalse(mIterator2.hasNext(), messageHasNextResultFalseExpected);
 
 		// Test the iterator common use case
 		Iterator<TreeNode<String>> mIterator3 = root.iterator();
-		assertTrue(messageHasNextResultFalseExpected, mIterator3.hasNext());
+		assertTrue(mIterator3.hasNext(), messageHasNextResultFalseExpected);
 	}
 
-	@Test(expected = NoSuchElementException.class)
+	@Test
 	public void testIteratorNextNoSuchElementException() {
-		// Test exception is thrown if there are no tree nodes
-		Iterator<TreeNode<String>> mIterator = root.iterator();
-		while (mIterator.hasNext()) {
+		assertThrows(NoSuchElementException.class, () -> {
+			// Test exception is thrown if there are no tree nodes
+			Iterator<TreeNode<String>> mIterator = root.iterator();
+			while (mIterator.hasNext()) {
+				mIterator.next();
+			}
 			mIterator.next();
-		}
-		mIterator.next();
+		});
 	}
 
-	@Test(expected = ConcurrentModificationException.class)
+	@Test
 	public void testIteratorNextConcurrentModificationException() {
-		// Test exception is thrown if tree is changed during the iteration without iterator
-		for (TreeNode<String> mNode : root) {
-			if (mNode.equals(node3)) {
-				root.remove(node3);
+		assertThrows(ConcurrentModificationException.class, () -> {
+			// Test exception is thrown if tree is changed during the iteration without iterator
+			for (TreeNode<String> mNode : root) {
+				if (mNode.equals(node3)) {
+					root.remove(node3);
+				}
 			}
-		}
+		});
 	}
 
 	@Test
@@ -850,57 +866,65 @@ public abstract class TreeNodeTest {
 			}
 		} while (true);
 		mIterator1.remove();
-		assertFalse(messageRemoveExpected, node2.hasSubtree(node3));
-		assertFalse(messageRemoveExpected, root.contains(node4));
-		assertFalse(messageRemoveExpected, root.contains(node5));
-		assertFalse(messageRemoveExpected, root.contains(node6));
+		assertFalse(node2.hasSubtree(node3), messageRemoveExpected);
+		assertFalse(root.contains(node4), messageRemoveExpected);
+		assertFalse(root.contains(node5), messageRemoveExpected);
+		assertFalse(root.contains(node6), messageRemoveExpected);
 		assertEquals(node7, mIterator1.next());
 		mIterator1.remove();
-		assertFalse(messageRemoveExpected, node2.contains(node7));
+		assertFalse(node2.contains(node7), messageRemoveExpected);
 		assertEquals(node8, mIterator1.next());
 		assertEquals(node9, mIterator1.next());
 		assertEquals(node10, mIterator1.next());
 		mIterator1.remove();
-		assertFalse(messageRemoveExpected, node9.contains(node10));
+		assertFalse(node9.contains(node10), messageRemoveExpected);
 		mIterator1.remove();
-		assertFalse(messageRemoveExpected, root.contains(node9));
+		assertFalse(root.contains(node9), messageRemoveExpected);
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test
 	public void testIteratorRemoveIllegalStateException() {
-		// Test exception is thrown if the iterator remove was called prior the iteration start
-		Iterator<TreeNode<String>> iterator = node1.iterator();
-		iterator.remove();
+		assertThrows(IllegalStateException.class, () -> {
+			// Test exception is thrown if the iterator remove was called prior the iteration start
+			Iterator<TreeNode<String>> iterator = node1.iterator();
+			iterator.remove();
+		});
 	}
 
-	@Test(expected = TreeNodeException.class)
+	@Test
 	public void testIteratorRemoveOnCurrentNodeTreeNodeException() {
-		// Test exception is thrown if iterator remove was called on the top tree node
-		Iterator<TreeNode<String>> iterator = node2.iterator();
-		iterator.next();
-		iterator.remove();
+		assertThrows(TreeNodeException.class, () -> {
+			// Test exception is thrown if iterator remove was called on the top tree node
+			Iterator<TreeNode<String>> iterator = node2.iterator();
+			iterator.next();
+			iterator.remove();
+		});
 	}
 
-	@Test(expected = TreeNodeException.class)
+	@Test
 	public void testIteratorRemoveOnRootTreeNodeException() {
-		// Test exception is thrown if iterator remove was called on the root tree node
-		Iterator<TreeNode<String>> iterator = root.iterator();
-		iterator.next();
-		iterator.remove();
+		assertThrows(TreeNodeException.class, () -> {
+			// Test exception is thrown if iterator remove was called on the root tree node
+			Iterator<TreeNode<String>> iterator = root.iterator();
+			iterator.next();
+			iterator.remove();
+		});
 	}
 
-	@Test(expected = ConcurrentModificationException.class)
+	@Test
 	public void testIteratorRemoveConcurrentModificationException() {
-		// Test exception is thrown if tree was changed while calling iterator remove
-		Iterator<TreeNode<String>> iterator = root.iterator();
-		do {
-			if (iterator.next().equals(node7)) {
-				break;
-			}
-		} while (true);
-		iterator.remove();
-		node2.dropSubtree(node8);
-		iterator.remove();
+		assertThrows(ConcurrentModificationException.class, () -> {
+			// Test exception is thrown if tree was changed while calling iterator remove
+			Iterator<TreeNode<String>> iterator = root.iterator();
+			do {
+				if (iterator.next().equals(node7)) {
+					break;
+				}
+			} while (true);
+			iterator.remove();
+			node2.dropSubtree(node8);
+			iterator.remove();
+		});
 	}
 
 }

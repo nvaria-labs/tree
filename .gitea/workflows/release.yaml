@@ -1,5 +1,7 @@
 name: Build gradle jar
 
+# Anyone who can push a matching tag can publish a signed release:
+# protect v* (and release) tags in the repository settings.
 on:
   push:
     tags:
@@ -11,7 +13,8 @@ jobs:
     name: Build jar
     runs-on: ubuntu-latest
     container:
-      image: registry.nvaria.cloud/ubuntu-act-jdk25:latest
+      # Pinned by digest; update the digest when the image is rebuilt
+      image: registry.nvaria.cloud/ubuntu-act-jdk25:latest@sha256:af64c5d732fc196c89b2f2f3c599b85eccd2d636a1a00d12ef997a661bccd82b
       credentials:
         username: ${{ secrets.DOCKERUSER }}
         password: ${{ secrets.DOCKERPW }}
@@ -21,29 +24,30 @@ jobs:
       NEXUS_MVN_SNAPSHOTS: ${{ vars.NEXUS_MVN_SNAPSHOTS }}
       NEXUS_USER: ${{ secrets.DOCKERUSER }}
       NEXUS_PW: ${{ secrets.DOCKERPW }}
-      # Signs every publication (nexus and Maven Central); without the key builds stay unsigned
-      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY_NVARIA_OSS }}
-      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE_NVARIA_OSS }}
     steps:
-      - uses: actions/checkout@v7
+      # Pinned to the commit of actions/checkout v7.0.1. This job never pushes,
+      # so the token is not kept in .git/config for the following steps.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          token: ${{ secrets.PAT}}
+          token: ${{ secrets.PAT }}
+          persist-credentials: false
+      # Build and tests run without the signing key: it is only passed to the publish steps
       - name: Build with Gradle
-        run: gradle build --no-daemon
+        run: ./gradlew build --no-daemon
+      # Signs every publication (nexus and Maven Central); without the key builds stay unsigned
       - name: Publish to nexus
-        run: gradle publishMavenPublicationToMaven-releaseRepository --no-daemon
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY_NVARIA_OSS }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE_NVARIA_OSS }}
+        run: ./gradlew publishMavenPublicationToMaven-releaseRepository --no-daemon
       # Uploads and validates the deployment; it goes live after "Publish" is clicked
       # on https://central.sonatype.com/publishing/deployments
       # Off unless the repository/organization variable MAVEN_CENTRAL_ENABLED is 'true'
       - name: Publish to Maven Central
         if: ${{ vars.MAVEN_CENTRAL_ENABLED == 'true' }}
         env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY_NVARIA_OSS }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE_NVARIA_OSS }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-        run: gradle publishToMavenCentral --no-daemon
-
-
-
-
-
-
+        run: ./gradlew publishToMavenCentral --no-daemon

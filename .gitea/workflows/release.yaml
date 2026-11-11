@@ -27,10 +27,34 @@ jobs:
     steps:
       # Pinned to the commit of actions/checkout v7.0.1. This job never pushes,
       # so the token is not kept in .git/config for the following steps.
+      # Full history, so the guard below can check that the tag is on main.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           token: ${{ secrets.PAT }}
           persist-credentials: false
+          fetch-depth: 0
+      # A tag can also be created in the Gitea UI, the API or by git push, bypassing the
+      # trigger-release workflow. Release only release versions from main, whatever created
+      # the tag. The release plugin pushes main and the tag together (git push --follow-tags).
+      - name: Check release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "The tagged commit $(git rev-parse --short HEAD) is not on main"
+            exit 1
+          fi
+          version=$(sed -n 's/^version=//p' version.properties)
+          if [[ -z "$version" || "$version" == *SNAPSHOT* ]]; then
+            echo "version.properties holds '$version', which is not a release version"
+            exit 1
+          fi
+          tag="${GITHUB_REF_NAME:-${GITHUB_REF#refs/tags/}}"
+          if [[ "$tag" == v* && "$tag" != "v$version" ]]; then
+            echo "Tag $tag does not match the version $version in version.properties"
+            exit 1
+          fi
+          echo "Releasing $version from tag $tag"
       # Build and tests run without the signing key: it is only passed to the publish steps
       - name: Build with Gradle
         run: ./gradlew build --no-daemon

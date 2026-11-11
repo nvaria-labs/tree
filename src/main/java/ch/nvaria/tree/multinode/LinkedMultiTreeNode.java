@@ -204,41 +204,6 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 		return copy;
 	}
 
-	@Override
-	public TreeNodeIterator iterator() {
-		return new TreeNodeIterator() {
-
-			/**
-			 * Returns the leftmost node of the current tree node if the
-			 * current tree node is not a leaf
-			 *
-			 * @return leftmost node of the current tree node if the current
-			 *         tree node is not a leaf
-			 * @throws TreeNodeException an exception that is thrown in case
-			 *                           if the current tree node is a leaf
-			 */
-			@Override
-			protected TreeNode<T> leftMostNode() {
-				return leftMostNode;
-			}
-
-			/**
-			 * Returns the right sibling node of the current tree node if the
-			 * current tree node is not root
-			 *
-			 * @return right sibling node of the current tree node if the current
-			 *         tree node is not root
-			 * @throws TreeNodeException an exception that may be thrown in case if
-			 *                           the current tree node is root
-			 */
-			@Override
-			protected TreeNode<T> rightSiblingNode() {
-				return rightSiblingNode;
-			}
-
-		};
-	}
-
 	/**
 	 * Checks whether the current tree node is a leaf, e.g. does not have any
 	 * subtrees

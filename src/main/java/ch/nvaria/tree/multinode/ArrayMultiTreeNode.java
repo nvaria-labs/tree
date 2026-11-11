@@ -139,30 +139,6 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 		return copy;
 	}
 
-	/**
-	 * Returns the iterator over the current tree node and all of its descendants, in pre-order
-	 *
-	 * @return iterator over the current tree node and all of its descendants
-	 */
-	@Override
-	public TreeNodeIterator iterator() {
-		return new TreeNodeIterator() {
-
-			@Override
-			protected TreeNode<T> leftMostNode() {
-				return subtrees.getFirst();
-			}
-
-			@Override
-			protected TreeNode<T> rightSiblingNode() {
-				List<TreeNode<T>> siblings = ((ArrayMultiTreeNode<T>) parent()).subtrees;
-				int rightSiblingNodeIndex = siblings.indexOf(ArrayMultiTreeNode.this) + 1;
-				return rightSiblingNodeIndex < siblings.size() ? siblings.get(rightSiblingNodeIndex) : null;
-			}
-
-		};
-	}
-
 	@Override
 	public boolean isLeaf() {
 		return subtrees.isEmpty();

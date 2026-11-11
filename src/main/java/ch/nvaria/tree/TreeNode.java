@@ -108,7 +108,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	protected T data;
 
 	/**
-	 * Number of structural changes of this tree node and all of its descendants
+	 * Number of structural changes of the subtrees of this tree node
 	 */
 	private transient int modCount;
 
@@ -173,13 +173,22 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	public abstract void clear();
 
 	/**
-	 * Returns an iterator over the elements in this tree in proper sequence
+	 * Returns an iterator over the current tree node and all of its descendants, in pre-order
 	 * <p>
-	 * The returned iterator is <b>fail-fast</b>
+	 * The iterator is <b>fail-fast</b> on a best-effort basis: when the iteration continues
+	 * from a tree node whose subtrees were structurally changed other than through the
+	 * iterator's own {@link Iterator#remove()}, it throws {@link ConcurrentModificationException}
+	 * <p>
+	 * {@link Iterator#remove()} removes the last returned tree node together with its
+	 * descendants, which are then skipped. It can remove neither the root tree node nor the
+	 * tree node the iteration started from
 	 *
-	 * @return an iterator over the elements in this tree in proper sequence
+	 * @return an iterator over the current tree node and all of its descendants, in pre-order
 	 */
-	public abstract TreeNodeIterator iterator();
+	@Override
+	public Iterator<TreeNode<T>> iterator() {
+		return new PreOrderIterator<>(this);
+	}
 
 	/**
 	 * Returns the data object stored in the current tree node
@@ -814,15 +823,13 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * @param <T> type of the data store in the tree node
 	 */
 	/**
-	 * Records a structural change of the current tree node, such as adding or
-	 * removing a subtree. Must be called by implementations after each structural
-	 * change, so that iterators over this node or any of its ancestors fail fast
-	 * with {@link ConcurrentModificationException}
+	 * Records a structural change of the subtrees of the current tree node, such as
+	 * adding or removing a subtree. Must be called by implementations after each
+	 * structural change, so that iterators fail fast with
+	 * {@link ConcurrentModificationException}
 	 */
 	protected void structureChanged() {
-		for (TreeNode<T> node = this; node != null; node = node.parent) {
-			node.modCount++;
-		}
+		modCount++;
 	}
 
 	/**
@@ -834,12 +841,12 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *                           its ancestors, since attaching it would create a cycle
 	 */
 	protected void prepareAttach(TreeNode<T> subtree) {
-		for (TreeNode<T> node = this; node != null; node = node.parent) {
-			if (node == subtree) {
-				String message = String.format(
-						"Unable to add the tree node %1$s. It is the current tree node or one of its ancestors", subtree);
-				throw new TreeNodeException(message);
-			}
+		// Every ancestor has at least one subtree, so a leaf other than the current tree node
+		// can't be one of them: the walk up to the root is only needed for non-leaf subtrees
+		if (subtree == this || !subtree.isLeaf() && ancestors().anyMatch(ancestor -> ancestor == subtree)) {
+			String message = String.format(
+					"Unable to add the tree node %1$s. It is the current tree node or one of its ancestors", subtree);
+			throw new TreeNodeException(message);
 		}
 		if (subtree.parent != null) {
 			subtree.parent.dropSubtree(subtree);
@@ -889,206 +896,125 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	}
 
 	/**
-	 * Base tree node iterator, which is expected to be extended by {@link TreeNode}
-	 * subclasses in order to perform custom implementation and return it in
-	 * {@link #iterator()}
+	 * Pre-order iterator using an explicit stack of levels, so it neither recurses nor
+	 * walks the tree to find the next node: each step is amortized O(1)
 	 */
-	protected abstract class TreeNodeIterator implements Iterator<TreeNode<T>> {
+	private static final class PreOrderIterator<T> implements Iterator<TreeNode<T>> {
 
 		/**
-		 * An expected size of the tree node required to check
-		 * whether the tree node was changed during <b>foreach</b>
-		 * iteration
+		 * A tree node returned by the iterator, with a snapshot of its subtrees
+		 * still to visit and its modification count at the time of the snapshot
 		 */
-		private int expectedModCount = modCount;
+		private static final class Level<T> {
 
-		/**
-		 * Reference to the current tree node within iteration
-		 */
-		private TreeNode<T> currentNode;
+			private final TreeNode<T> node;
 
-		/**
-		 * Reference to the next tree node within iteration
-		 */
-		private TreeNode<T> nextNode = TreeNode.this;
+			private final Iterator<TreeNode<T>> subtrees;
 
-		/**
-		 * Indicates whether there is a next tree node available
-		 * within iteration
-		 */
-		private boolean nextNodeAvailable = true;
+			private int expectedModCount;
 
-		/**
-		 * Returns the leftmost node of the current tree node if the
-		 * current tree node is not a leaf
-		 *
-		 * @return leftmost node of the current tree node if the current
-		 *         tree node is not a leaf
-		 * @throws TreeNodeException an exception that is thrown in case
-		 *                           if the current tree node is a leaf
-		 */
-		protected abstract TreeNode<T> leftMostNode();
-
-		/**
-		 * Returns the right sibling node of the current tree node if the
-		 * current tree node is not root
-		 *
-		 * @return right sibling node of the current tree node if the current
-		 *         tree node is not root
-		 * @throws TreeNodeException an exception that may be thrown in case if
-		 *                           the current tree node is root
-		 */
-		protected abstract TreeNode<T> rightSiblingNode();
-
-		/**
-		 * Checks whether the current tree node is not a leaf and returns the
-		 * leftmost node from {@link #leftMostNode()}
-		 *
-		 * @return leftmost node of the current tree node if the current tree
-		 *         node is not a leaf
-		 * @throws TreeNodeException an exception that is thrown in case
-		 *                           if the current tree node is a leaf
-		 */
-		private TreeNode<T> checkAndGetLeftMostNode() {
-			if (isLeaf()) {
-				throw new TreeNodeException("Leftmost node can't be obtained. Current tree node is a leaf");
-			} else {
-				return leftMostNode();
+			private Level(TreeNode<T> node) {
+				this.node = node;
+				this.expectedModCount = node.modCount;
+				this.subtrees = node.subtrees().iterator();
 			}
+
+			private boolean isModified() {
+				return node.modCount != expectedModCount;
+			}
+
+			private void checkForConcurrentModification() {
+				if (isModified()) {
+					throw new ConcurrentModificationException();
+				}
+			}
+
 		}
 
-		/**
-		 * Checks whether the current tree node is not root and returns the
-		 * right sibling node from {@link #rightSiblingNode()}
-		 *
-		 * @return right sibling node of the current tree node if the current
-		 *         tree node is not root
-		 * @throws TreeNodeException an exception that may be thrown in case if
-		 *                           the current tree node is root
-		 */
-		private TreeNode<T> checkAndGetRightSiblingNode() {
-			if (isRoot()) {
-				throw new TreeNodeException("Right sibling node can't be obtained. Current tree node is root");
-			} else {
-				return rightSiblingNode();
-			}
+		private final TreeNode<T> start;
+
+		private final Deque<Level<T>> stack = new ArrayDeque<>();
+
+		private boolean started;
+
+		private TreeNode<T> lastReturned;
+
+		private PreOrderIterator(TreeNode<T> start) {
+			this.start = start;
 		}
 
-		/**
-		 * Returns {@code true} if the iteration has more elements;
-		 * otherwise returns {@code false}
-		 *
-		 * @return {@code true} if the iteration has more elements;
-		 *         {@code false} otherwise
-		 */
 		@Override
 		public boolean hasNext() {
-			return nextNodeAvailable;
+			if (!started) {
+				return true;
+			}
+			while (!stack.isEmpty()) {
+				Level<T> top = stack.peek();
+				// A modified level reports a next element, so that next() fails fast
+				if (top.isModified() || top.subtrees.hasNext()) {
+					return true;
+				}
+				stack.pop();
+			}
+			return false;
 		}
 
-		/**
-		 * Returns the next element in the iteration
-		 *
-		 * @return the next element in the iteration
-		 * @throws NoSuchElementException if the iteration has no more elements
-		 */
 		@Override
 		public TreeNode<T> next() {
-			checkForConcurrentModification();
 			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			currentNode = nextNode;
-			if (nextNode.isLeaf()) {
-				if (nextNode.isRoot()) {
-					nextNodeAvailable = false;
-				} else {
-					do {
-						TreeNode<T> currentNode = nextNode;
-						nextNode = nextNode.parent();
-						if (currentNode.equals(TreeNode.this)) {
-							nextNodeAvailable = false;
-							break;
-						}
-						TreeNode<T> nextSibling = currentNode.iterator().checkAndGetRightSiblingNode();
-						if (nextSibling != null) {
-							nextNode = nextSibling;
-							break;
-						}
-					} while (true);
-				}
+			TreeNode<T> node;
+			if (started) {
+				Level<T> top = stack.peek();
+				top.checkForConcurrentModification();
+				node = top.subtrees.next();
 			} else {
-				nextNode = nextNode.iterator().checkAndGetLeftMostNode();
+				started = true;
+				node = start;
 			}
-			return currentNode;
+			stack.push(new Level<>(node));
+			lastReturned = node;
+			return node;
 		}
 
-		/**
-		 * Checks whether tree node was changed during <b>foreach</b>
-		 * iteration and throws {@link ConcurrentModificationException}
-		 * exception if so
-		 */
-		private void checkForConcurrentModification() {
-			if (expectedModCount != modCount) {
-				throw new ConcurrentModificationException();
-			}
-		}
-
-		/**
-		 * Removes from the underlying tree the last element returned by this
-		 * iterator (optional operation)
-		 * <p>
-		 * This method can be called only once per call to {@link #next}.
-		 * The behavior of an iterator is unspecified if the underlying tree
-		 * is modified while the iteration is in progress in any way other
-		 * than by calling this method
-		 *
-		 * @throws IllegalStateException an exception that may be thrown in case
-		 *                               if remove was performed without any
-		 *                               iteration
-		 * @throws TreeNodeException an exception that may be thrown in case if
-		 *                           remove was performed on a root node
-		 */
 		@Override
 		public void remove() {
 			String errorMessage = "Failed to remove the tree node. ";
-			if (!isIterationStarted()) {
-				throw new IllegalStateException(errorMessage + "The iteration has not been performed yet");
+			if (lastReturned == null) {
+				throw new IllegalStateException(errorMessage
+						+ "next() has not been called, or remove() has already been called after the last call to next()");
 			}
-			if (currentNode.isRoot()) {
-				String message = String.format(errorMessage + "The tree node %1$s is root", currentNode);
+			if (lastReturned.isRoot()) {
+				String message = String.format(errorMessage + "The tree node %1$s is root", lastReturned);
 				throw new TreeNodeException(message);
 			}
-			if (currentNode.equals(TreeNode.this)) {
+			if (lastReturned == start) {
 				throw new TreeNodeException(errorMessage + "The starting node can't be removed");
 			}
-			checkForConcurrentModification();
-			TreeNode<T> currentNode = this.currentNode;
-			while (true) {
-				if (currentNode.isRoot()) {
-					nextNodeAvailable = false;
+			TreeNode<T> parent = lastReturned.parent();
+			Level<T> parentLevel = null;
+			for (Level<T> level : stack) {
+				if (level.node == parent) {
+					parentLevel = level;
 					break;
 				}
-				TreeNode<T> rightSiblingNode = currentNode.iterator().checkAndGetRightSiblingNode();
-				if (rightSiblingNode != null) {
-					nextNode = rightSiblingNode;
+				if (level.node != lastReturned) {
 					break;
 				}
-				currentNode = currentNode.parent;
 			}
-			TreeNode<T> parent = this.currentNode.parent();
-			parent.dropSubtree(this.currentNode);
-			this.currentNode = parent;
-			expectedModCount = modCount;
-		}
-
-		/**
-		 * Returns whether iteration has been started
-		 *
-		 * @return {@code true} if iteration has been started; {@code false} otherwise
-		 */
-		private boolean isIterationStarted() {
-			return currentNode != null;
+			if (parentLevel != null) {
+				parentLevel.checkForConcurrentModification();
+			}
+			// Skip the descendants of the removed tree node
+			if (!stack.isEmpty() && stack.peek().node == lastReturned) {
+				stack.pop();
+			}
+			parent.dropSubtree(lastReturned);
+			if (parentLevel != null) {
+				parentLevel.expectedModCount = parent.modCount;
+			}
+			lastReturned = null;
 		}
 
 	}

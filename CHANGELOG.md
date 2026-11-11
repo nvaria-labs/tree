@@ -37,6 +37,15 @@
    [#13](https://github.com/Scalified/tree/issues/13)): traversals, `size`, `height`, `toString` and `clone` use an
    explicit stack; `contains` and `remove(node)` walk up from the node in O(depth) instead of searching the tree.
    New protected hook `detachedCopy()` replaces overriding `clone()` in implementations
+10. `add` is O(1) for leaves: it no longer walks all ancestors twice (100k-deep chain: 130 s -> 40 ms)
+11. New pre-order iterator with an explicit stack: iteration is linear (wide `ArrayMultiTreeNode`s were
+    quadratic); `Iterator.remove` no longer leaves the subtree the iteration started from.
+    **Behavior change:** a second `remove()` without `next()` throws `IllegalStateException` instead of
+    removing the parent; concurrent modification is detected when the iteration continues from a
+    modified tree node (best effort, as in `java.util` collections)
+12. **Breaking:** `iterator()` returns `Iterator<TreeNode<T>>` and is implemented in `TreeNode`;
+    `TreeNodeIterator` was removed (it was protected, so the result of `iterator()` was not usable
+    outside the package)
 
 # 0.2.4
 

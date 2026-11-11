@@ -909,8 +909,10 @@ public abstract class TreeNodeTest {
 		assertEquals(node10, mIterator1.next());
 		mIterator1.remove();
 		assertFalse(node9.contains(node10), messageRemoveExpected);
-		mIterator1.remove();
-		assertFalse(root.contains(node9), messageRemoveExpected);
+		// Iterator contract: one remove() per next()
+		assertThrows(IllegalStateException.class, mIterator1::remove);
+		assertTrue(root.hasSubtree(node9));
+		assertFalse(mIterator1.hasNext());
 	}
 
 	@Test
@@ -952,7 +954,6 @@ public abstract class TreeNodeTest {
 					break;
 				}
 			} while (true);
-			iterator.remove();
 			node2.dropSubtree(node8);
 			iterator.remove();
 		});
@@ -1035,10 +1036,100 @@ public abstract class TreeNodeTest {
 	public void testIteratorDetectsSizePreservingModification() {
 		Iterator<TreeNode<String>> iterator = root.iterator();
 		iterator.next();
+		iterator.next();
 		TreeNode<String> added = createTreeNode(ANOTHER_NODE_DATA);
-		node9.add(added);
-		node9.dropSubtree(added);
+		root.add(added);
+		root.dropSubtree(added);
 		assertThrows(ConcurrentModificationException.class, iterator::next);
+	}
+
+	@Test
+	public void testIteratorRemoveSkipsDescendantsAndStaysInSubtree() {
+		// Removing a node with descendants must continue with its next sibling and never
+		// leave the subtree the iteration started from
+		Iterator<TreeNode<String>> iterator = node2.iterator();
+		assertEquals(node2, iterator.next());
+		assertEquals(node3, iterator.next());
+		iterator.remove();
+		List<TreeNode<String>> rest = new ArrayList<>();
+		iterator.forEachRemaining(rest::add);
+		assertEquals(List.of(node7, node8), rest);
+		assertFalse(node2.hasSubtree(node3));
+		assertTrue(root.hasSubtree(node9));
+	}
+
+	@Test
+	public void testIteratorRemoveLastSubtreeWithDescendantsStaysInSubtree() {
+		// node5 is the last subtree of node3 and has a descendant: the iteration started at
+		// node3 must end after removing it instead of climbing to node7
+		Iterator<TreeNode<String>> iterator = node3.iterator();
+		assertEquals(node3, iterator.next());
+		assertEquals(node4, iterator.next());
+		assertEquals(node5, iterator.next());
+		iterator.remove();
+		assertFalse(iterator.hasNext());
+		assertEquals(List.of(node4), node3.subtrees());
+	}
+
+	@Test
+	public void testIteratorRemoveLastNodeOfSubtree() {
+		Iterator<TreeNode<String>> iterator = node9.iterator();
+		iterator.next();
+		assertEquals(node10, iterator.next());
+		assertFalse(iterator.hasNext());
+		iterator.remove();
+		assertTrue(node9.isLeaf());
+		assertFalse(iterator.hasNext());
+	}
+
+	@Test
+	public void testIteratorRemoveTwiceThrowsException() {
+		Iterator<TreeNode<String>> iterator = root.iterator();
+		iterator.next();
+		iterator.next();
+		iterator.next();
+		assertEquals(node3, iterator.next());
+		iterator.remove();
+		assertThrows(IllegalStateException.class, iterator::remove);
+		assertTrue(root.hasSubtree(node2), "The parent must not be removed by a second remove()");
+	}
+
+	@Test
+	public void testIteratorIsUsableAsPlainIterator() {
+		// iterator() returns java.util.Iterator, usable outside the package
+		Iterator<TreeNode<String>> iterator = node9.iterator();
+		assertEquals(List.of(node9, node10), List.of(iterator.next(), iterator.next()));
+	}
+
+	@Test
+	public void testAddLeafToItselfThrowsException() {
+		assertThrows(TreeNodeException.class, () -> node1.add(node1));
+		assertTrue(node1.isLeaf());
+	}
+
+	@Test
+	public void testAddToDeepChainIsLinear() {
+		// add() used to walk all ancestors twice, which made building a chain quadratic
+		assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
+			TreeNode<String> chainRoot = createTreeNode(ROOT_DATA);
+			TreeNode<String> current = chainRoot;
+			for (int i = 0; i < 200_000; i++) {
+				TreeNode<String> next = createTreeNode(NODE_DATA_1);
+				current.add(next);
+				current = next;
+			}
+			assertEquals(200_000, current.level());
+		});
+	}
+
+	@Test
+	public void testIterationOverWideNodeIsLinear() {
+		// Each iteration step used to search the sibling list, which made wide nodes quadratic
+		TreeNode<String> wide = createTreeNode(ROOT_DATA);
+		for (int i = 0; i < 200_000; i++) {
+			wide.add(createTreeNode(NODE_DATA_1));
+		}
+		assertTimeoutPreemptively(Duration.ofSeconds(10), () -> assertEquals(200_001, wide.stream().count()));
 	}
 
 	@Test

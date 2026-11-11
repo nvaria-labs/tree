@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-package com.scalified.tree.multinode;
+package ch.nvaria.tree.multinode;
 
-import com.scalified.tree.TreeNode;
-import com.scalified.tree.TreeNodeException;
-import com.scalified.tree.TreeNodeTest;
+import ch.nvaria.tree.TreeNode;
+import ch.nvaria.tree.TreeNodeException;
+import ch.nvaria.tree.TreeNodeTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -55,18 +55,18 @@ public abstract class MultiTreeNodeTest extends TreeNodeTest {
 		// Test the specified tree nodes are the siblings of the current node
 		String message = "Tree node siblings were incorrectly determined";
 
-		Collection<TreeNode<String>> mSiblingsLevel1 = new HashSet<>(2);
+		Collection<TreeNode<String>> mSiblingsLevel1 = new ArrayList<>(2);
 		mSiblingsLevel1.add(node2);
 		mSiblingsLevel1.add(node9);
 
-		Collection<TreeNode<String>> mSiblingsLevel2 = new HashSet<>(2);
+		Collection<TreeNode<String>> mSiblingsLevel2 = new ArrayList<>(2);
 		mSiblingsLevel2.add(node3);
 		mSiblingsLevel2.add(node7);
 
 		assertEquals(mSiblingsLevel1, ((MultiTreeNode<String>) node1).siblings(), message);
 		assertEquals(mSiblingsLevel2, ((MultiTreeNode<String>) node8).siblings(), message);
 
-		assertEquals(Collections.emptySet(), ((MultiTreeNode<String>) node6).siblings(), message);
+		assertEquals(List.of(), ((MultiTreeNode<String>) node6).siblings(), message);
 	}
 
 	@Test

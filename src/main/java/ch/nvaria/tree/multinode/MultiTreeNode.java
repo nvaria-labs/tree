@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-package com.scalified.tree.multinode;
+package ch.nvaria.tree.multinode;
 
-import com.scalified.tree.TreeNode;
-import com.scalified.tree.TreeNodeException;
+import ch.nvaria.tree.TreeNode;
+import ch.nvaria.tree.TreeNodeException;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * This class represents the K-ary (multiple node) tree data
@@ -79,7 +78,7 @@ public abstract class MultiTreeNode<T> extends TreeNode<T> {
 	 *         no subtrees
 	 */
 	@SuppressWarnings("unchecked")
-	public Collection<? extends MultiTreeNode<T>> siblings() {
+	public List<MultiTreeNode<T>> siblings() {
 		if (isRoot()) {
 			String message = String.format("Unable to find the siblings. The tree node %1$s is root", root());
 			throw new TreeNodeException(message);
@@ -87,7 +86,7 @@ public abstract class MultiTreeNode<T> extends TreeNode<T> {
 		return parent().subtrees().stream()
 				.filter(sibling -> !sibling.equals(this))
 				.map(sibling -> (MultiTreeNode<T>) sibling)
-				.collect(Collectors.toCollection(LinkedHashSet::new));
+				.toList();
 	}
 
 	/**

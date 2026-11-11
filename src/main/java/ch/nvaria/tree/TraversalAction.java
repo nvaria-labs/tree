@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.scalified.tree;
+package ch.nvaria.tree;
 
 /**
  * An interface, which defines the action to perform while traversing

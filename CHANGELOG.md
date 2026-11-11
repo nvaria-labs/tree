@@ -1,10 +1,13 @@
-# 0.3.0
+# 0.4.0
 
 1. Forked from Scalified/tree; Maven group changed to `ch.nvaria`
 2. Requires Java 21
 3. Build: Gradle 9.9, version catalog, single-module layout, Gitea workflows (Travis removed)
 4. Tests migrated from JUnit 4 to JUnit 6
 5. Added NOTICE crediting Scalified
+6. **Breaking:** packages renamed from `com.scalified.tree` to `ch.nvaria.tree`; JPMS module `ch.nvaria.tree`
+7. **Breaking:** ordered results are returned as `List`: `subtrees()`, `preOrdered()`, `postOrdered()`,
+   `path()`, `findAll()`, `siblings()`
 
 ### Additions
 

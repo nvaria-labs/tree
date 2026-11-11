@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.scalified.tree;
+package ch.nvaria.tree;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -131,13 +131,13 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * Returns the collection of the child nodes of the current node
 	 * with all of its proper descendants, if any
 	 * <p>
-	 * Returns {@link Collections#emptySet()} if the current node is leaf
+	 * Returns an empty list if the current node is leaf
 	 *
 	 * @return collection of the child nodes of the current node with
 	 *         all of its proper descendants, if any;
-	 *         {@link Collections#emptySet()} if the current node is leaf
+	 *         an empty list if the current node is leaf
 	 */
-	public abstract Collection<? extends TreeNode<T>> subtrees();
+	public abstract List<TreeNode<T>> subtrees();
 
 	/**
 	 * Adds the subtree with all of its descendants to the current tree node
@@ -330,10 +330,10 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * @param data data to find the tree nodes with
 	 * @return collection of the searched tree nodes with data specified, in pre-order
 	 */
-	public Collection<? extends TreeNode<T>> findAll(T data) {
+	public List<TreeNode<T>> findAll(T data) {
 		return stream()
 				.filter(node -> Objects.equals(node.data(), data))
-				.collect(Collectors.toCollection(LinkedHashSet::new));
+				.toList();
 	}
 
 	/**
@@ -490,11 +490,8 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * @return pre ordered collection of nodes of the current tree starting
 	 *         from the current tree node
 	 */
-	public Collection<TreeNode<T>> preOrdered() {
-		if (isLeaf()) {
-			return Collections.singleton(this);
-		}
-		Collection<TreeNode<T>> preOrdered = new ArrayList<>();
+	public List<TreeNode<T>> preOrdered() {
+		List<TreeNode<T>> preOrdered = new ArrayList<>();
 		traversePreOrder(preOrdered::add);
 		return preOrdered;
 	}
@@ -506,11 +503,8 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * @return post ordered collection of nodes of the current tree starting
 	 *         from the current tree node
 	 */
-	public Collection<TreeNode<T>> postOrdered() {
-		if (isLeaf()) {
-			return Collections.singleton(this);
-		}
-		Collection<TreeNode<T>> postOrdered = new ArrayList<>();
+	public List<TreeNode<T>> postOrdered() {
+		List<TreeNode<T>> postOrdered = new ArrayList<>();
 		traversePostOrder(postOrdered::add);
 		return postOrdered;
 	}
@@ -525,11 +519,11 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *                           current node does not have such descendant or if the
 	 *                           specified tree node is root
 	 */
-	public Collection<? extends TreeNode<T>> path(TreeNode<T> descendant) {
+	public List<TreeNode<T>> path(TreeNode<T> descendant) {
 		if (descendant == null
 				|| isLeaf()
 				|| this.equals(descendant)) {
-			return Collections.singletonList(this);
+			return List.of(this);
 		}
 		String errorMessage = "Unable to build the path between tree nodes. ";
 		if (descendant.isRoot()) {

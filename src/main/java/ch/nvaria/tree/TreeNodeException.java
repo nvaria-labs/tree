@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.scalified.tree;
+package ch.nvaria.tree;
 
 /**
  * The class is responsible for different exceptional cases,

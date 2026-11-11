@@ -15,16 +15,15 @@
  * limitations under the License.
  */
 
-package com.scalified.tree.multinode;
+package ch.nvaria.tree.multinode;
 
-import com.scalified.tree.TraversalAction;
-import com.scalified.tree.TreeNode;
-import com.scalified.tree.TreeNodeException;
+import ch.nvaria.tree.TraversalAction;
+import ch.nvaria.tree.TreeNode;
+import ch.nvaria.tree.TreeNodeException;
 
 import java.io.Serial;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation of the K-ary (multi node) tree data structure,
@@ -73,23 +72,17 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 	 * Returns the collection of the child nodes of the current node
 	 * with all of its proper descendants, if any
 	 * <p>
-	 * Returns {@link Collections#emptySet()} if the current node is leaf
+	 * Returns an empty list if the current node is leaf
 	 *
 	 * @return collection of the child nodes of the current node with
 	 *         all of its proper descendants, if any;
-	 *         {@link Collections#emptySet()} if the current node is leaf
+	 *         an empty list if the current node is leaf
 	 */
 	@Override
-	public Collection<? extends TreeNode<T>> subtrees() {
-		if (isLeaf()) {
-			return Collections.emptySet();
-		}
-		Collection<TreeNode<T>> subtrees = new LinkedHashSet<>();
-		subtrees.add(leftMostNode);
-		LinkedMultiTreeNode<T> nextSubtree = leftMostNode.rightSiblingNode;
-		while (nextSubtree != null) {
-			subtrees.add(nextSubtree);
-			nextSubtree = nextSubtree.rightSiblingNode;
+	public List<TreeNode<T>> subtrees() {
+		List<TreeNode<T>> subtrees = new ArrayList<>();
+		for (LinkedMultiTreeNode<T> subtree = leftMostNode; subtree != null; subtree = subtree.rightSiblingNode) {
+			subtrees.add(subtree);
 		}
 		return subtrees;
 	}
@@ -423,33 +416,28 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 
 	/**
 	 * Returns the collection of nodes, which have the same parent
-	 * as the current node; {@link Collections#emptyList()} if the current
+	 * as the current node; an empty list if the current
 	 * tree node is root or if the current tree node has no subtrees
 	 * <p>
 	 * Overridden to have a faster array implementation
 	 *
 	 * @return collection of nodes, which have the same parent as
-	 *         the current node; {@link Collections#emptyList()} if the
+	 *         the current node; an empty list if the
 	 *         current tree node is root or if the current tree node has
 	 *         no subtrees
 	 */
 	@Override
-	public Collection<? extends MultiTreeNode<T>> siblings() {
+	public List<MultiTreeNode<T>> siblings() {
 		if (isRoot()) {
 			String message = String.format("Unable to find the siblings. The tree node %1$s is root", root());
 			throw new TreeNodeException(message);
 		}
-		LinkedMultiTreeNode<T> firstNode = ((LinkedMultiTreeNode<T>) parent()).leftMostNode;
-		if (firstNode.rightSiblingNode == null) {
-			return Collections.emptySet();
-		}
-		Collection<MultiTreeNode<T>> siblings = new LinkedHashSet<>();
-		LinkedMultiTreeNode<T> nextNode = firstNode;
-		while (nextNode != null) {
-			if (!nextNode.equals(this)) {
-				siblings.add(nextNode);
+		List<MultiTreeNode<T>> siblings = new ArrayList<>();
+		LinkedMultiTreeNode<T> sibling = ((LinkedMultiTreeNode<T>) parent()).leftMostNode;
+		for (; sibling != null; sibling = sibling.rightSiblingNode) {
+			if (!sibling.equals(this)) {
+				siblings.add(sibling);
 			}
-			nextNode = nextNode.rightSiblingNode;
 		}
 		return siblings;
 	}

@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package com.scalified.tree.multinode;
+package ch.nvaria.tree.multinode;
 
-import com.scalified.tree.TreeNode;
+import ch.nvaria.tree.TreeNode;
 
 /**
  * @author shell

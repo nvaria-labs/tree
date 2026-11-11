@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.scalified.tree;
+package ch.nvaria.tree;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -166,22 +166,22 @@ public abstract class TreeNodeTest {
 		// Test if subtrees are correctly determined
 		String message = "Subtrees collection was incorrectly determined";
 
-		Collection<TreeNode<String>> mSubtreesLevel1 = new HashSet<>(3);
+		Collection<TreeNode<String>> mSubtreesLevel1 = new ArrayList<>(3);
 		mSubtreesLevel1.add(node1);
 		mSubtreesLevel1.add(node2);
 		mSubtreesLevel1.add(node9);
 		assertEquals(mSubtreesLevel1, root.subtrees(), message);
 
-		Collection<TreeNode<String>> mSubtreesLevel2 = new HashSet<>(3);
+		Collection<TreeNode<String>> mSubtreesLevel2 = new ArrayList<>(3);
 		mSubtreesLevel2.add(node3);
 		mSubtreesLevel2.add(node7);
 		mSubtreesLevel2.add(node8);
 		assertEquals(mSubtreesLevel2, node2.subtrees(), message);
 
-		Collection<TreeNode<String>> mSubtreesLevel3 = Collections.singleton(node6);
+		Collection<TreeNode<String>> mSubtreesLevel3 = List.of(node6);
 		assertEquals(mSubtreesLevel3, node5.subtrees(), message);
 
-		assertEquals(Collections.emptySet(), node6.subtrees(), message);
+		assertEquals(List.of(), node6.subtrees(), message);
 	}
 
 	@Test
@@ -217,14 +217,14 @@ public abstract class TreeNodeTest {
 		// Test if the tree has a single tree node with the searched data
 		String messageSingletonCollectionFoundExpected =
 				"The single tree node was expected to have the searched data, but actually was not";
-		assertEquals(Collections.singleton(node6), node6.findAll(NODE_DATA_4), messageSingletonCollectionFoundExpected);
-		assertEquals(Collections.singleton(node7), node7.findAll(null), messageSingletonCollectionFoundExpected);
-		assertEquals(Collections.singleton(node2), root.findAll(NODE_DATA_2), messageSingletonCollectionFoundExpected);
+		assertEquals(List.of(node6), node6.findAll(NODE_DATA_4), messageSingletonCollectionFoundExpected);
+		assertEquals(List.of(node7), node7.findAll(null), messageSingletonCollectionFoundExpected);
+		assertEquals(List.of(node2), root.findAll(NODE_DATA_2), messageSingletonCollectionFoundExpected);
 
 		// Test if the tree has more than one node with the searched data
 		String messageCollectionFoundExpected =
 				"The tree nodes was expected to have the searched data, but actually was not";
-		Collection<TreeNode<String>> expectedMany = new HashSet<>();
+		Collection<TreeNode<String>> expectedMany = new ArrayList<>();
 		expectedMany.add(node4);
 		expectedMany.add(node6);
 		expectedMany.add(node9);
@@ -234,7 +234,7 @@ public abstract class TreeNodeTest {
 		// Test if the tree does not have any tree node with the searched data
 		String messageEmptyCollectionFoundExpected =
 				"Three tree nodes with the searched data was not expected to be found, but actually was";
-		assertEquals(Collections.emptySet(), node10.findAll("data"), messageEmptyCollectionFoundExpected);
+		assertEquals(List.of(), node10.findAll("data"), messageEmptyCollectionFoundExpected);
 	}
 
 	@Test
@@ -556,7 +556,7 @@ public abstract class TreeNodeTest {
 		// Test tree pre ordered collection is correct
 		String message = "Tree was incorrectly pre ordered";
 		assertEquals(preOrderedExpected(), root.preOrdered(), message);
-		assertEquals(Collections.singleton(node10), node10.preOrdered(), message);
+		assertEquals(List.of(node10), node10.preOrdered(), message);
 	}
 
 	@Test
@@ -564,7 +564,7 @@ public abstract class TreeNodeTest {
 		// Test tree post ordered collection is correct
 		String message = "Tree was incorrectly post ordered";
 		assertEquals(postOrderedExpected(), root.postOrdered(), message);
-		assertEquals(Collections.singleton(node1), node1.postOrdered(), message);
+		assertEquals(List.of(node1), node1.postOrdered(), message);
 	}
 
 	@Test

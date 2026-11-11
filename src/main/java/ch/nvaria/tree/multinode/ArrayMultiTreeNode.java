@@ -15,17 +15,14 @@
  * limitations under the License.
  */
 
-package com.scalified.tree.multinode;
+package ch.nvaria.tree.multinode;
 
-import com.scalified.tree.TraversalAction;
-import com.scalified.tree.TreeNode;
-import com.scalified.tree.TreeNodeException;
+import ch.nvaria.tree.TraversalAction;
+import ch.nvaria.tree.TreeNode;
+import ch.nvaria.tree.TreeNodeException;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -94,8 +91,8 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 	 * @return snapshot of the subtrees of the current tree node
 	 */
 	@Override
-	public Collection<? extends TreeNode<T>> subtrees() {
-		return isLeaf() ? Collections.emptySet() : new LinkedHashSet<>(subtrees);
+	public List<TreeNode<T>> subtrees() {
+		return List.copyOf(subtrees);
 	}
 
 	@Override
@@ -233,19 +230,20 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 		return isLeaf() ? 0 : 1 + subtrees.stream().mapToInt(TreeNode::height).max().orElse(0);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Collection<? extends MultiTreeNode<T>> siblings() {
+	public List<MultiTreeNode<T>> siblings() {
 		if (isRoot()) {
 			String message = String.format("Unable to find the siblings. The tree node %1$s is root", root());
 			throw new TreeNodeException(message);
 		}
-		Collection<MultiTreeNode<T>> siblings = new LinkedHashSet<>();
+		List<MultiTreeNode<T>> siblings = new ArrayList<>();
 		for (TreeNode<T> sibling : ((ArrayMultiTreeNode<T>) parent()).subtrees) {
 			if (!sibling.equals(this)) {
 				siblings.add((MultiTreeNode<T>) sibling);
 			}
 		}
-		return siblings.isEmpty() ? Collections.emptySet() : siblings;
+		return siblings;
 	}
 
 }

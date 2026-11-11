@@ -191,7 +191,7 @@ that represent expressions
 
 ## Usage
 
-[**TreeNode**](src/main/java/com/scalified/tree/TreeNode.java) - 
+[**TreeNode**](src/main/java/ch/nvaria/tree/TreeNode.java) - 
 is the top interface, which represents the basic tree data structures. It describes the basic methods, which are 
 implemented by all the trees
 
@@ -324,7 +324,7 @@ node.clear();
 
 ### Traversal
 
-[TraversalAction](src/main/java/com/scalified/tree/TraversalAction.java)
+[TraversalAction](src/main/java/ch/nvaria/tree/TraversalAction.java)
 allows to define an action, which has a single method **perform(TreeNode<T>)**. This method is called during traversal
 on each node visited
 
@@ -418,7 +418,7 @@ int height = node.height();
 
 ### K-ary (multinode) Trees
 
-[**MultiTreeNode**](src/main/java/com/scalified/tree/multinode/MultiTreeNode.java) - 
+[**MultiTreeNode**](src/main/java/ch/nvaria/tree/multinode/MultiTreeNode.java) - 
 interface, which adds additional methods for multi tree node (K-ary) tree data structures:
 
 ```java
@@ -443,9 +443,9 @@ boolean resultRemoveSubtrees = node.removeSubtrees(collectionToRemove);
 
 K-ary (multi node) trees are represented by **MultiTreeNode** interface and have 2 implementations:
 
-* [**ArrayMultiTreeNode**](src/main/java/com/scalified/tree/multinode/ArrayMultiTreeNode.java) - 
+* [**ArrayMultiTreeNode**](src/main/java/ch/nvaria/tree/multinode/ArrayMultiTreeNode.java) - 
 implementation based on the array-of-pointers representation
-* [**LinkedMultiTreeNode**](src/main/java/com/scalified/tree/multinode/LinkedMultiTreeNode.java) -
+* [**LinkedMultiTreeNode**](src/main/java/ch/nvaria/tree/multinode/LinkedMultiTreeNode.java) -
 implementation based on the leftmost-child-right-sibling representation
 
 **LinkedMultiTreeNode** is better optimized for trees with many nodes, whereas **ArrayMultiTreeNode** is better for large node trees
@@ -454,6 +454,7 @@ implementation based on the leftmost-child-right-sibling representation
 
 ```
   Copyright 2016 Scalified <http://www.scalified.com>
+  Modifications Copyright 2026 Nvaria GmbH
  
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.

@@ -89,9 +89,9 @@ In this case, most of the pointers in the arrays will be **null**
 specify what is called a *branching factor*, that the initial number of subtrees before grow (like *capacity* in 
 the **java.util.ArrayList**)
 
-#### Leftmost-Child—Right-Sibling
+#### Leftmost-Child-Right-Sibling
 
-In the **Leftmost-Child—Right-Sibling** representation each node contains a pointer to its leftmost child; a node does 
+In the **Leftmost-Child-Right-Sibling** representation each node contains a pointer to its leftmost child; a node does 
 not have pointers to any of its other children. In order to locate the second and subsequent children of a node *n*, 
 the children link list created, in which each child *c* points to the child of *n* immediately to the right of *c*.
 That node is called the right sibling of *c*
@@ -118,30 +118,30 @@ The downward arrows are the leftmost-child links; the sideways arrows are the ri
 
 **Pre order** is a form of tree traversal, where the action is called firstly on the current node, and then the 
 pre order function is called again recursively on each subtree from left to right
-<br>Pre order listing on the figure is: **+ a − b c d**
+<br>Pre order listing on the figure is: **+ a - b c d**
 
 **Post order** is a form of tree traversal, where the post order function is called recursively on each subtree 
 from left to right and then the action is called
-<br>Post order listing on the figure is: **a b c − d * +**
+<br>Post order listing on the figure is: **a b c - d * +**
 
 #### Evaluating Expression Tree
 
 There are three types of expressions: **infix**, **prefix** and **postfix**
 
 **Infix** are expressions in the ordinary notation, where binary operators appear between their operands. For the 
-figure above the *infix* expression is: **a + (b − c) * d**. The equivalent *prefix* and *postfix* expressions are: 
-**+ a − b c d** for *prefix* and **a b c − d * +** for *postfix*
+figure above the *infix* expression is: **a + (b - c) * d**. The equivalent *prefix* and *postfix* expressions are: 
+**+ a - b c d** for *prefix* and **a b c - d * +** for *postfix*
 <br>Having either the *prefix* or *postfix* expression the *infix* expression can be constructed in a simple way. 
 For instance, in order to construct the *infix* expression from prefix one, firstly the operator that is followed by 
 the required number of operands with no embedded operators must be found
-<br>In prefix expression **+ a * − b c d** the **− b c** is such a string, since the minus sign, like all operators 
-in running example takes two operands. This subexpression is then replaced by a new symbol, say **x = − b c**. Then, 
+<br>In prefix expression **+ a * - b c d** the **- b c** is such a string, since the minus sign, like all operators 
+in running example takes two operands. This subexpression is then replaced by a new symbol, say **x = - b c**. Then, 
 this process of identifying an operator followed by its operands repeated again. Now the expression is: **+ a * x d**. 
 The next subexpression will be **y = * x d**. This reduces the target expression to **+ a y**, which is lastly 
 converted to just **a + y**
 <br>The remainder of the infix expression **a + y** then is reconstructed by retracing the steps above. Firstly, 
 the *y* is substituted to **x * d**, changing the target expression to: **a + (x * d)**. And lastly the *x* is replaced 
-by **− b c** or simply **b − c**. So the target expression now is: **a + ((b − c) * d)** or **a + (b − c) * d**
+by **- b c** or simply **b - c**. So the target expression now is: **a + ((b - c) * d)** or **a + (b - c) * d**
 <br>The conversion from *postfix* to *infix* expression uses the same algorithm. The only difference is that firstly 
 the operator, which is preceded by the requisite number of operands must be found in order to decompose the *postfix* 
 expression
@@ -175,11 +175,11 @@ value of its argument *n*. It then computes the value of the expression represen
 <br>**S(T)**: The value returned by evaluate function when called on the root of *T* equals the value of the arithmetic 
 expression represented by *T*
 <br>For the basis, *T* consists of a single node. That is, the argument *n* is a (pointer to a) leaf. Since the 
-operator field has the value *‘i’* when the node represents and operand, the function succeeds
+operator field has the value *'i'* when the node represents and operand, the function succeeds
 
 ![Structural Induction Nodes](assets/structural_induction_nodes.png)
 
-If the node *n* is not a (pointer to a) leaf, the inductive hypothesis is that *S(T’)* is true for each tree *T’* 
+If the node *n* is not a (pointer to a) leaf, the inductive hypothesis is that *S(T')* is true for each tree *T'* 
 rooted at one of the children of *n*. *S(T)* then must be proved for the tree *T* rooted at *n*
 <br>Since operators are assumed to be binary, *n* has two subtrees. By the inductive hypothesis, the values of 
 *value_1* and *value_2* are the values of the left and right subtrees. In the figure, *value_1* holds the value of 

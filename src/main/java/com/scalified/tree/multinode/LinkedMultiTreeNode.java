@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Scalified <http://www.scalified.com>
+ * Modifications Copyright 2026 Nvaria GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +109,7 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 		if (subtree == null) {
 			return false;
 		}
+		prepareAttach(subtree);
 		linkParent(subtree, this);
 		if (isLeaf()) {
 			leftMostNode = (LinkedMultiTreeNode<T>) subtree;
@@ -116,6 +118,7 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 			lastSubtreeNode.rightSiblingNode = (LinkedMultiTreeNode<T>) subtree;
 			lastSubtreeNode = lastSubtreeNode.rightSiblingNode;
 		}
+		structureChanged();
 		return true;
 	}
 
@@ -139,16 +142,24 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 		}
 		if (leftMostNode.equals(subtree)) {
 			leftMostNode = leftMostNode.rightSiblingNode;
+			if (leftMostNode == null) {
+				lastSubtreeNode = null;
+			}
 			unlinkParent(subtree);
 			((LinkedMultiTreeNode<T>) subtree).rightSiblingNode = null;
+			structureChanged();
 			return true;
 		} else {
 			LinkedMultiTreeNode<T> nextSubtree = leftMostNode;
 			while (nextSubtree.rightSiblingNode != null) {
 				if (nextSubtree.rightSiblingNode.equals(subtree)) {
+					if (subtree.equals(lastSubtreeNode)) {
+						lastSubtreeNode = nextSubtree;
+					}
 					unlinkParent(subtree);
 					nextSubtree.rightSiblingNode = nextSubtree.rightSiblingNode.rightSiblingNode;
 					((LinkedMultiTreeNode<T>) subtree).rightSiblingNode = null;
+					structureChanged();
 					return true;
 				} else {
 					nextSubtree = nextSubtree.rightSiblingNode;
@@ -170,10 +181,11 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 				unlinkParent(nextNode);
 				LinkedMultiTreeNode<T> nextNodeRightSiblingNode = nextNode.rightSiblingNode;
 				nextNode.rightSiblingNode = null;
-				nextNode.lastSubtreeNode = null;
 				nextNode = nextNodeRightSiblingNode;
 			}
 			leftMostNode = null;
+			lastSubtreeNode = null;
+			structureChanged();
 		}
 	}
 
@@ -184,6 +196,18 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 	 *
 	 * @return an iterator over the elements in this tree in proper sequence
 	 */
+	@Override
+	public LinkedMultiTreeNode<T> clone() {
+		LinkedMultiTreeNode<T> copy = (LinkedMultiTreeNode<T>) super.clone();
+		copy.leftMostNode = null;
+		copy.rightSiblingNode = null;
+		copy.lastSubtreeNode = null;
+		for (LinkedMultiTreeNode<T> subtree = leftMostNode; subtree != null; subtree = subtree.rightSiblingNode) {
+			copy.add(subtree.clone());
+		}
+		return copy;
+	}
+
 	@Override
 	public TreeNodeIterator iterator() {
 		return new TreeNodeIterator() {

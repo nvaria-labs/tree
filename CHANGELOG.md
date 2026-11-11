@@ -6,6 +6,20 @@
 4. Tests migrated from JUnit 4 to JUnit 6
 5. Added NOTICE crediting Scalified
 
+### Fixes
+
+1. `commonAncestor` returned wrong results for nodes in different branches at different depths
+2. `add` now detaches the node from its former parent instead of leaving it under two parents
+3. `add` throws `TreeNodeException` when the node is the current node or one of its ancestors,
+   instead of creating a cycle
+4. `LinkedMultiTreeNode`: adding after dropping the last subtree silently lost the new subtree;
+   adding to a former subtree after `clear` failed with `NullPointerException`
+5. `ArrayMultiTreeNode.addSubtrees` could insert `null` elements
+6. Iteration was quadratic: the tree size was recomputed on every step. Concurrent modification
+   is now detected with a modification counter, which also catches size-preserving changes
+7. `clone` is now a deep copy with its own identity. **Behavior change:** the clone is no longer
+   equal to the original
+
 # 0.2.4
 
 1. Fixed broken ordering

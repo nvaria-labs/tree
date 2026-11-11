@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Scalified <http://www.scalified.com>
+ * Modifications Copyright 2026 Nvaria GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +20,7 @@ package com.scalified.tree;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -745,10 +747,39 @@ public abstract class TreeNodeTest {
 
 	@Test
 	public void testClone() {
-		// Test the tree node is correctly cloned
-		String message = "The cloned tree node was expected to be equal to the original one, but actually was not";
-		TreeNode<String> mClonedRoot = root.clone();
-		assertEquals(root, mClonedRoot, message);
+		// Test the tree node is deeply copied and the copy has its own identity
+		TreeNode<String> clonedRoot = root.clone();
+		assertNotEquals(root, clonedRoot);
+		assertTrue(clonedRoot.isRoot());
+		assertEquals(root.size(), clonedRoot.size());
+		assertEquals(root.height(), clonedRoot.height());
+		assertEquals(root.toString(), clonedRoot.toString());
+		for (TreeNode<String> clonedNode : clonedRoot) {
+			assertFalse(root.equals(clonedNode) || root.contains(clonedNode),
+					"The clone must not share tree nodes with the original");
+		}
+	}
+
+	@Test
+	public void testCloneIsIndependentOfOriginal() {
+		TreeNode<String> clonedNode2 = node2.clone();
+		assertTrue(clonedNode2.isRoot());
+		assertEquals(node2.size(), clonedNode2.size());
+		clonedNode2.clear();
+		clonedNode2.add(createTreeNode(ANOTHER_NODE_DATA));
+		assertEquals(3, node2.subtrees().size(), "Changing the clone must not change the original");
+		assertEquals(11, root.size());
+		assertTrue(root.hasSubtree(node2));
+	}
+
+	@Test
+	public void testCloneOfLeaf() {
+		TreeNode<String> clonedNode1 = node1.clone();
+		assertTrue(clonedNode1.isRoot());
+		assertTrue(clonedNode1.isLeaf());
+		assertEquals(NODE_DATA_1, clonedNode1.data());
+		assertTrue(clonedNode1.add(createTreeNode(ANOTHER_NODE_DATA)));
+		assertTrue(node1.isLeaf());
 	}
 
 	@Test
@@ -925,6 +956,113 @@ public abstract class TreeNodeTest {
 			node2.dropSubtree(node8);
 			iterator.remove();
 		});
+	}
+
+	@Test
+	public void testCommonAncestorAcrossBranches() {
+		// Nodes at different depths in different branches share only the root
+		assertEquals(root, node6.commonAncestor(node10));
+		assertEquals(root, node10.commonAncestor(node6));
+		assertEquals(root, node4.commonAncestor(node10));
+		// Nodes at different depths in the same branch
+		assertEquals(node2, node6.commonAncestor(node7));
+		assertEquals(node2, node7.commonAncestor(node6));
+		// A node and its descendant: the node's parent, a node is not its own ancestor
+		assertEquals(node2, node3.commonAncestor(node6));
+	}
+
+	@Test
+	public void testAddAfterDroppingLastSubtree() {
+		assertTrue(node2.dropSubtree(node8));
+		TreeNode<String> added = createTreeNode(ANOTHER_NODE_DATA);
+		assertTrue(node2.add(added));
+		assertTrue(node2.hasSubtree(added));
+		assertEquals(3, node2.subtrees().size());
+	}
+
+	@Test
+	public void testAddAfterDroppingAllSubtrees() {
+		assertTrue(node9.dropSubtree(node10));
+		assertTrue(node9.add(createTreeNode(ANOTHER_NODE_DATA)));
+		assertTrue(node9.add(createTreeNode(ANOTHER_NODE_DATA)));
+		assertEquals(2, node9.subtrees().size());
+	}
+
+	@Test
+	public void testAddToFormerSubtreeAfterClear() {
+		root.clear();
+		assertTrue(node3.add(createTreeNode(ANOTHER_NODE_DATA)));
+		assertEquals(3, node3.subtrees().size());
+		assertTrue(node2.add(createTreeNode(ANOTHER_NODE_DATA)));
+		assertEquals(4, node2.subtrees().size());
+	}
+
+	@Test
+	public void testAddReparentsSubtree() {
+		assertTrue(node9.add(node3));
+		assertFalse(node2.hasSubtree(node3), "The subtree must be detached from its former parent");
+		assertTrue(node9.hasSubtree(node3));
+		assertEquals(node9, node3.parent());
+		assertEquals(2, node2.subtrees().size());
+		assertEquals(11, root.size());
+		// The former parent keeps working
+		assertTrue(node2.add(createTreeNode(ANOTHER_NODE_DATA)));
+		assertEquals(3, node2.subtrees().size());
+	}
+
+	@Test
+	public void testAddExistingSubtreeMovesItToTheEnd() {
+		assertTrue(node2.add(node3));
+		assertEquals(Arrays.asList(node7, node8, node3), new ArrayList<>(node2.subtrees()));
+		assertEquals(11, root.size());
+	}
+
+	@Test
+	public void testAddSelfThrowsException() {
+		assertThrows(TreeNodeException.class, () -> node2.add(node2));
+	}
+
+	@Test
+	public void testAddAncestorThrowsException() {
+		assertThrows(TreeNodeException.class, () -> node5.add(node2));
+		assertThrows(TreeNodeException.class, () -> node6.add(root));
+		// The tree is left unchanged
+		assertTrue(root.hasSubtree(node2));
+		assertEquals(11, root.size());
+	}
+
+	@Test
+	public void testIteratorDetectsSizePreservingModification() {
+		Iterator<TreeNode<String>> iterator = root.iterator();
+		iterator.next();
+		TreeNode<String> added = createTreeNode(ANOTHER_NODE_DATA);
+		node9.add(added);
+		node9.dropSubtree(added);
+		assertThrows(ConcurrentModificationException.class, iterator::next);
+	}
+
+	@Test
+	public void testIteratorIgnoresModificationOutsideIteratedSubtree() {
+		Iterator<TreeNode<String>> iterator = node2.iterator();
+		iterator.next();
+		node9.add(createTreeNode(ANOTHER_NODE_DATA));
+		assertDoesNotThrow(iterator::next);
+	}
+
+	@Test
+	public void testIteratorOnLargeTreeIsLinear() {
+		// Used to recompute the tree size on every step, which made iteration quadratic
+		TreeNode<String> wide = createTreeNode(ROOT_DATA);
+		for (int i = 0; i < 1_000; i++) {
+			TreeNode<String> child = createTreeNode(NODE_DATA_1);
+			wide.add(child);
+			for (int j = 0; j < 100; j++) {
+				child.add(createTreeNode(NODE_DATA_2));
+			}
+		}
+		long[] count = {0};
+		assertTimeoutPreemptively(Duration.ofSeconds(10), () -> wide.forEach(node -> count[0]++));
+		assertEquals(101_001, count[0]);
 	}
 
 }

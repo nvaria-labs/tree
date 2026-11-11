@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Scalified <http://www.scalified.com>
+ * Modifications Copyright 2026 Nvaria GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +86,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	/**
 	 * A unique identifier, used to distinguish or compare the tree nodes
 	 */
-	private final long id = ID_GENERATOR.getAndIncrement();
+	private long id = ID_GENERATOR.getAndIncrement();
 
 	/**
 	 * Reference to the parent tree node. Is {@code null} if the current tree node is root
@@ -96,6 +97,11 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * Data store in the current tree node
 	 */
 	protected T data;
+
+	/**
+	 * Number of structural changes of this tree node and all of its descendants
+	 */
+	private transient int modCount;
 
 	/**
 	 * Creates an instance of this class
@@ -531,7 +537,10 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	}
 
 	/**
-	 * Returns the common ancestor of the current node and the node specified
+	 * Returns the common ancestor of the current node and the node specified,
+	 * which is the nearest node that is a proper ancestor of both. A node is
+	 * not considered its own ancestor, so for a node and one of its descendants
+	 * the parent of that node is returned
 	 *
 	 * @param node node, which the common ancestor is determined for,
 	 *             along with the current node
@@ -547,7 +556,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 			String message = errorMessage + "The specified tree node is null";
 			throw new TreeNodeException(message);
 		}
-		if (!this.root().contains(node)) {
+		if (this.root() != node.root()) {
 			String message = String.format(errorMessage +
 					"The specified tree node %1$s was not found in the current tree node %2$s", node, this);
 			throw new TreeNodeException(message);
@@ -557,13 +566,15 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 			String message = String.format(errorMessage + "The tree node %1$s is root", this.isRoot() ? this : node);
 			throw new TreeNodeException(message);
 		}
-		if (this.equals(node)
-				|| node.isSiblingOf(this)) {
-			return parent();
+		Set<TreeNode<T>> nodeAncestors = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (TreeNode<T> ancestor = node.parent(); ancestor != null; ancestor = ancestor.parent()) {
+			nodeAncestors.add(ancestor);
 		}
-		int thisNodeLevel = this.level();
-		int thatNodeLevel = node.level();
-		return thisNodeLevel > thatNodeLevel ? node.parent() : this.parent();
+		TreeNode<T> ancestor = this.parent();
+		while (!nodeAncestors.contains(ancestor)) {
+			ancestor = ancestor.parent();
+		}
+		return ancestor;
 	}
 
 	/**
@@ -698,15 +709,24 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	}
 
 	/**
-	 * Creates and returns a copy of this object
+	 * Creates a deep copy of the current tree node and all of its descendants.
+	 * The copy is a root tree node with its own identity, so it is not equal
+	 * to the original. The data objects are not copied, but shared
+	 * <p>
+	 * Implementations storing subtrees must override this method, reset the
+	 * subtrees of the copy and add clones of the original subtrees to it
 	 *
-	 * @return a clone of this instance
+	 * @return a deep copy of the current tree node
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public TreeNode<T> clone() {
 		try {
-			return (TreeNode<T>) super.clone();
+			TreeNode<T> copy = (TreeNode<T>) super.clone();
+			copy.id = ID_GENERATOR.getAndIncrement();
+			copy.parent = null;
+			copy.modCount = 0;
+			return copy;
 		} catch (CloneNotSupportedException e) {
 			String message = "Unable to clone the current tree node";
 			throw new TreeNodeException(message, e);
@@ -817,6 +837,39 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * @param node tree node to remove the parent tree node reference assignment from
 	 * @param <T> type of the data store in the tree node
 	 */
+	/**
+	 * Records a structural change of the current tree node, such as adding or
+	 * removing a subtree. Must be called by implementations after each structural
+	 * change, so that iterators over this node or any of its ancestors fail fast
+	 * with {@link ConcurrentModificationException}
+	 */
+	protected void structureChanged() {
+		for (TreeNode<T> node = this; node != null; node = node.parent) {
+			node.modCount++;
+		}
+	}
+
+	/**
+	 * Prepares the specified subtree for being attached to the current tree node:
+	 * detaches it from its current parent, if any
+	 *
+	 * @param subtree subtree to be attached to the current tree node
+	 * @throws TreeNodeException if the subtree is the current tree node or one of
+	 *                           its ancestors, since attaching it would create a cycle
+	 */
+	protected void prepareAttach(TreeNode<T> subtree) {
+		for (TreeNode<T> node = this; node != null; node = node.parent) {
+			if (node == subtree) {
+				String message = String.format(
+						"Unable to add the tree node %1$s. It is the current tree node or one of its ancestors", subtree);
+				throw new TreeNodeException(message);
+			}
+		}
+		if (subtree.parent != null) {
+			subtree.parent.dropSubtree(subtree);
+		}
+	}
+
 	protected static <T> void unlinkParent(TreeNode<T> node) {
 		node.parent = null;
 	}
@@ -879,7 +932,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 		 * whether the tree node was changed during <b>foreach</b>
 		 * iteration
 		 */
-		private long expectedSize = size();
+		private int expectedModCount = modCount;
 
 		/**
 		 * Reference to the current tree node within iteration
@@ -1008,7 +1061,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 		 * exception if so
 		 */
 		private void checkForConcurrentModification() {
-			if (expectedSize != size()) {
+			if (expectedModCount != modCount) {
 				throw new ConcurrentModificationException();
 			}
 		}
@@ -1058,7 +1111,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 			TreeNode<T> parent = this.currentNode.parent();
 			parent.dropSubtree(this.currentNode);
 			this.currentNode = parent;
-			expectedSize = size();
+			expectedModCount = modCount;
 		}
 
 		/**

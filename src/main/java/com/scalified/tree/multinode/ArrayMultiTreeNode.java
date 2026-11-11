@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Scalified <http://www.scalified.com>
+ * Modifications Copyright 2026 Nvaria GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,9 +136,11 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 		if (subtree == null) {
 			return false;
 		}
+		prepareAttach(subtree);
 		linkParent(subtree, this);
 		ensureSubtreesCapacity(subtreesSize + 1);
 		subtrees[subtreesSize++] = subtree;
+		structureChanged();
 		return true;
 	}
 
@@ -204,6 +207,7 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 		}
 		subtrees[--subtreesSize] = null;
 		unlinkParent(subtree);
+		structureChanged();
 		return true;
 	}
 
@@ -242,6 +246,7 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 			}
 			subtrees = new Object[branchingFactor];
 			subtreesSize = 0;
+			structureChanged();
 		}
 	}
 
@@ -252,6 +257,18 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 	 *
 	 * @return an iterator over the elements in this tree in proper sequence
 	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public ArrayMultiTreeNode<T> clone() {
+		ArrayMultiTreeNode<T> copy = (ArrayMultiTreeNode<T>) super.clone();
+		copy.subtrees = new Object[Math.max(branchingFactor, subtreesSize)];
+		copy.subtreesSize = 0;
+		for (int i = 0; i < subtreesSize; i++) {
+			copy.add(((TreeNode<T>) subtrees[i]).clone());
+		}
+		return copy;
+	}
+
 	@Override
 	public TreeNodeIterator iterator() {
 		return new TreeNodeIterator() {
@@ -466,33 +483,6 @@ public class ArrayMultiTreeNode<T> extends MultiTreeNode<T> {
 			height = Math.max(height, subtree.height());
 		}
 		return height + 1;
-	}
-
-	/**
-	 * Adds the collection of the subtrees with all of theirs descendants
-	 * to the current tree node
-	 * <p>
-	 * Checks whether this tree node was changed as a result of the call
-	 *
-	 * @param subtrees collection of the subtrees with all of their
-	 *                 descendants
-	 * @return {@code true} if this tree node was changed as a
-	 *         result of the call; {@code false} otherwise
-	 */
-	@Override
-	public boolean addSubtrees(Collection<? extends MultiTreeNode<T>> subtrees) {
-		if (areAllNulls(subtrees)) {
-			return false;
-		}
-		for (MultiTreeNode<T> subtree : subtrees) {
-			linkParent(subtree, this);
-		}
-		Object[] subtreesArray = subtrees.toArray();
-		int subtreesArrayLength = subtreesArray.length;
-		ensureSubtreesCapacity(subtreesSize + subtreesArrayLength);
-		System.arraycopy(subtreesArray, 0, this.subtrees, subtreesSize, subtreesArrayLength);
-		subtreesSize += subtreesArrayLength;
-		return subtreesArrayLength != 0;
 	}
 
 	/**

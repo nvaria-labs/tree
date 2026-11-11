@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Scalified <http://www.scalified.com>
+ * Modifications Copyright 2026 Nvaria GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,13 +61,13 @@ public abstract class MultiTreeNode<T> extends TreeNode<T> {
 		if (areAllNulls(subtrees)) {
 			return false;
 		}
+		boolean result = false;
 		for (MultiTreeNode<T> subtree : subtrees) {
-			linkParent(subtree, this);
-			if (!add(subtree)) {
-				return false;
+			if (add(subtree)) {
+				result = true;
 			}
 		}
-		return true;
+		return result;
 	}
 
 	/**

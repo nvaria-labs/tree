@@ -1065,4 +1065,64 @@ public abstract class TreeNodeTest {
 		assertEquals(101_001, count[0]);
 	}
 
+	@Test
+	public void testStreamIsPreOrder() {
+		assertEquals(new ArrayList<>(root.preOrdered()), root.stream().toList());
+		assertEquals(List.of(node1), node1.stream().toList());
+		assertEquals(new ArrayList<>(node2.preOrdered()), node2.stream().toList());
+	}
+
+	@Test
+	public void testStreamIsLazy() {
+		assertEquals(Optional.of(node2), root.stream().filter(node -> NODE_DATA_2.equals(node.data())).findFirst());
+		assertEquals(3, root.stream().limit(3).count());
+	}
+
+	@Test
+	public void testStreamFailsFastOnModification() {
+		assertThrows(ConcurrentModificationException.class,
+				() -> root.stream().forEach(node -> {
+					if (node.equals(node3)) {
+						root.remove(node9);
+					}
+				}));
+	}
+
+	@Test
+	public void testFindFirst() {
+		assertEquals(Optional.of(node1), root.findFirst(NODE_DATA_1));
+		assertEquals(Optional.of(node7), root.findFirst(null));
+		assertEquals(Optional.empty(), root.findFirst(ANOTHER_NODE_DATA));
+		assertEquals(Optional.of(node5), node3.findFirst(NODE_DATA_1));
+		assertEquals(Optional.empty(), node1.findFirst(NODE_DATA_2));
+	}
+
+	@Test
+	public void testFindAllIsPreOrder() {
+		assertEquals(List.of(node1, node5, node8), new ArrayList<>(root.findAll(NODE_DATA_1)));
+	}
+
+	@Test
+	public void testOptionalParent() {
+		assertEquals(Optional.empty(), root.optionalParent());
+		assertEquals(Optional.of(node3), node5.optionalParent());
+	}
+
+	@Test
+	public void testAncestors() {
+		assertEquals(List.of(), root.ancestors().toList());
+		assertEquals(List.of(root), node1.ancestors().toList());
+		assertEquals(List.of(node5, node3, node2, root), node6.ancestors().toList());
+	}
+
+	@Test
+	public void testTraversalActionAsLambda() {
+		List<TreeNode<String>> visited = new ArrayList<>();
+		root.traversePreOrder(visited::add);
+		assertEquals(new ArrayList<>(root.preOrdered()), visited);
+		visited.clear();
+		root.traversePostOrder(visited::add);
+		assertEquals(new ArrayList<>(root.postOrdered()), visited);
+	}
+
 }

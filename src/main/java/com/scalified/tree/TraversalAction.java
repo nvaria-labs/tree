@@ -20,12 +20,17 @@ package com.scalified.tree;
 /**
  * An interface, which defines the action to perform while traversing
  * the tree
+ * <p>
+ * Actions that visit the whole tree can be written as a lambda:
+ * {@code node.traversePreOrder(n -> System.out.println(n.data()))}.
+ * Override {@link #isCompleted()} to stop the traversal early
  *
  * @author shell
  * @version 1.0.0
  * @since 1.0.0
  */
-public interface TraversalAction<T extends TreeNode> {
+@FunctionalInterface
+public interface TraversalAction<T extends TreeNode<?>> {
 
 	/**
 	 * Is called on each node, while traversing the tree
@@ -36,10 +41,14 @@ public interface TraversalAction<T extends TreeNode> {
 
 	/**
 	 * Checks whether the traversal is completed and no more required
+	 * <p>
+	 * By default the traversal is never completed early, so all nodes are visited
 	 *
 	 * @return {@code true} if traversal is completed and no more required,
 	 *         {@code false} otherwise
 	 */
-	boolean isCompleted();
+	default boolean isCompleted() {
+		return false;
+	}
 
 }

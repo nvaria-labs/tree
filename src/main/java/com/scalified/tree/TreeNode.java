@@ -17,10 +17,13 @@
 
 package com.scalified.tree;
 
+import java.io.Serial;
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * This interface represents the basic tree data structure
@@ -77,6 +80,12 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 1.0.0
  */
 public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable, Cloneable {
+
+	/**
+	 * Current UID of this object used for serialization
+	 */
+	@Serial
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Identifier generator, used to get a unique id for each created tree node
@@ -209,13 +218,10 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *         if the current node is root
 	 */
 	public TreeNode<T> root() {
-		if (isRoot()) {
-			return this;
-		}
 		TreeNode<T> node = this;
-		do {
+		while (!node.isRoot()) {
 			node = node.parent();
-		} while (!node.isRoot());
+		}
 		return node;
 	}
 
@@ -229,6 +235,52 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 */
 	public TreeNode<T> parent() {
 		return parent;
+	}
+
+	/**
+	 * Returns the parent node of the current node, if any
+	 *
+	 * @return parent node of the current node; {@link Optional#empty()}
+	 *         if the current node is root
+	 */
+	public Optional<TreeNode<T>> optionalParent() {
+		return Optional.ofNullable(parent());
+	}
+
+	/**
+	 * Returns the proper ancestors of the current node, starting with
+	 * its parent and ending with the root
+	 * <p>
+	 * Returns an empty stream if the current node is root
+	 *
+	 * @return stream of the proper ancestors of the current node, nearest first
+	 */
+	public Stream<TreeNode<T>> ancestors() {
+		return Stream.iterate(parent(), Objects::nonNull, TreeNode::parent);
+	}
+
+	/**
+	 * Returns a sequential stream of the current tree node and all of its
+	 * descendants, in pre-order. The stream is lazy and fails fast with
+	 * {@link ConcurrentModificationException} if the tree is structurally
+	 * changed while it is consumed
+	 *
+	 * @return stream of the current tree node and all of its descendants, in pre-order
+	 */
+	public Stream<TreeNode<T>> stream() {
+		return StreamSupport.stream(spliterator(), false);
+	}
+
+	/**
+	 * Creates a spliterator over the current tree node and all of its
+	 * descendants, in pre-order
+	 *
+	 * @return spliterator over the current tree node and all of its descendants
+	 */
+	@Override
+	public Spliterator<TreeNode<T>> spliterator() {
+		return Spliterators.spliteratorUnknownSize(iterator(),
+				Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.NONNULL);
 	}
 
 	/**
@@ -247,29 +299,27 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * starting from the current tree node and returns the first occurrence of it
 	 *
 	 * @param data data to find the tree node with
-	 * @return first occurrence of the searched tree node with data specified
+	 * @return first occurrence of the searched tree node with data specified;
+	 *         {@code null} if there is none
+	 * @see #findFirst(Object)
 	 */
-	@SuppressWarnings("unchecked")
-	public TreeNode<T> find(final T data) {
-		if (isLeaf()) {
-			return (data() == null ? data == null : data().equals(data)) ? this : null;
-		}
-		final TreeNode<T>[] searchedNode = (TreeNode<T>[]) Array.newInstance(getClass(), 1);
-		traversePreOrder(new TraversalAction<TreeNode<T>>() {
-			@Override
-			public void perform(TreeNode<T> node) {
-				if ((node.data() == null ?
-						data == null : node.data().equals(data))) {
-					searchedNode[0] = node;
-				}
-			}
+	public TreeNode<T> find(T data) {
+		return findFirst(data).orElse(null);
+	}
 
-			@Override
-			public boolean isCompleted() {
-				return searchedNode[0] != null;
-			}
-		});
-		return searchedNode[0];
+	/**
+	 * Searches the tree node within the tree, which has the specified data,
+	 * starting from the current tree node and returns the first occurrence of it
+	 * in pre-order
+	 *
+	 * @param data data to find the tree node with
+	 * @return first occurrence of the searched tree node with data specified;
+	 *         {@link Optional#empty()} if there is none
+	 */
+	public Optional<TreeNode<T>> findFirst(T data) {
+		return stream()
+				.filter(node -> Objects.equals(node.data(), data))
+				.findFirst();
 	}
 
 	/**
@@ -278,29 +328,12 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * tree nodes
 	 *
 	 * @param data data to find the tree nodes with
-	 * @return collection of the searched tree nodes with data specified
+	 * @return collection of the searched tree nodes with data specified, in pre-order
 	 */
-	public Collection<? extends TreeNode<T>> findAll(final T data) {
-		if (isLeaf()) {
-			return (data() == null ? data == null : data().equals(data)) ?
-					Collections.singleton(this) : Collections.<TreeNode<T>>emptySet();
-		}
-		final Collection<TreeNode<T>> searchedNodes = new HashSet<>();
-		traversePreOrder(new TraversalAction<TreeNode<T>>() {
-			@Override
-			public void perform(TreeNode<T> node) {
-				if ((node.data() == null ?
-						data == null : node.data().equals(data))) {
-					searchedNodes.add(node);
-				}
-			}
-
-			@Override
-			public boolean isCompleted() {
-				return false;
-			}
-		});
-		return searchedNodes;
+	public Collection<? extends TreeNode<T>> findAll(T data) {
+		return stream()
+				.filter(node -> Objects.equals(node.data(), data))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/**
@@ -313,17 +346,9 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *         there is a specified subtree; {@code false} otherwise
 	 */
 	public boolean hasSubtree(TreeNode<T> subtree) {
-		if (subtree == null
-				|| isLeaf()
-				|| subtree.isRoot()) {
-			return false;
-		}
-		for (TreeNode<T> mSubtree : subtrees()) {
-			if (mSubtree.equals(subtree)) {
-				return true;
-			}
-		}
-		return false;
+		return subtree != null
+				&& !subtree.isRoot()
+				&& this.equals(subtree.parent());
 	}
 
 	/**
@@ -363,17 +388,12 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *         descendants (entire tree) contains all of the nodes from the
 	 *         specified collection; {@code false} otherwise
 	 */
-	public boolean containsAll(Collection<TreeNode<T>> nodes) {
+	public boolean containsAll(Collection<? extends TreeNode<T>> nodes) {
 		if (isLeaf()
 				|| areAllNulls(nodes)) {
 			return false;
 		}
-		for (TreeNode<T> node : nodes) {
-			if (!contains(node)) {
-				return false;
-			}
-		}
-		return true;
+		return nodes.stream().allMatch(this::contains);
 	}
 
 	/**
@@ -413,17 +433,14 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * @return {@code true} if the current tree node was changed as a result
 	 *         of the call; {@code false} otherwise
 	 */
-	public boolean removeAll(Collection<TreeNode<T>> nodes) {
+	public boolean removeAll(Collection<? extends TreeNode<T>> nodes) {
 		if (isLeaf()
 				|| areAllNulls(nodes)) {
 			return false;
 		}
 		boolean result = false;
 		for (TreeNode<T> node : nodes) {
-			boolean currentResult = remove(node);
-			if (!result && currentResult) {
-				result = true;
-			}
+			result |= remove(node);
 		}
 		return result;
 	}
@@ -477,10 +494,9 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 		if (isLeaf()) {
 			return Collections.singleton(this);
 		}
-		final Collection<TreeNode<T>> mPreOrdered = new ArrayList<>();
-		TraversalAction<TreeNode<T>> action = populateAction(mPreOrdered);
-		traversePreOrder(action);
-		return mPreOrdered;
+		Collection<TreeNode<T>> preOrdered = new ArrayList<>();
+		traversePreOrder(preOrdered::add);
+		return preOrdered;
 	}
 
 	/**
@@ -494,10 +510,9 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 		if (isLeaf()) {
 			return Collections.singleton(this);
 		}
-		final Collection<TreeNode<T>> mPostOrdered = new ArrayList<>();
-		TraversalAction<TreeNode<T>> action = populateAction(mPostOrdered);
-		traversePostOrder(action);
-		return mPostOrdered;
+		Collection<TreeNode<T>> postOrdered = new ArrayList<>();
+		traversePostOrder(postOrdered::add);
+		return postOrdered;
 	}
 
 	/**
@@ -521,16 +536,14 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 			String message = String.format(errorMessage + "Current node %1$s is root", descendant);
 			throw new TreeNodeException(message);
 		}
-		List<TreeNode<T>> path = new LinkedList<>();
-		TreeNode<T> node = descendant;
-		path.add(node);
-		do {
-			node = node.parent();
-			path.add(0, node);
+		LinkedList<TreeNode<T>> path = new LinkedList<>();
+		path.addFirst(descendant);
+		for (TreeNode<T> node = descendant.parent(); node != null; node = node.parent()) {
+			path.addFirst(node);
 			if (this.equals(node)) {
 				return path;
 			}
-		} while (!node.isRoot());
+		}
 		String message = String.format(errorMessage +
 				"The specified tree node %1$s is not the descendant of tree node %2$s", descendant, this);
 		throw new TreeNodeException(message);
@@ -566,15 +579,12 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 			String message = String.format(errorMessage + "The tree node %1$s is root", this.isRoot() ? this : node);
 			throw new TreeNodeException(message);
 		}
-		Set<TreeNode<T>> nodeAncestors = Collections.newSetFromMap(new IdentityHashMap<>());
-		for (TreeNode<T> ancestor = node.parent(); ancestor != null; ancestor = ancestor.parent()) {
-			nodeAncestors.add(ancestor);
-		}
-		TreeNode<T> ancestor = this.parent();
-		while (!nodeAncestors.contains(ancestor)) {
-			ancestor = ancestor.parent();
-		}
-		return ancestor;
+		Set<TreeNode<T>> nodeAncestors = node.ancestors()
+				.collect(Collectors.toCollection(() -> Collections.newSetFromMap(new IdentityHashMap<>())));
+		return ancestors()
+				.filter(nodeAncestors::contains)
+				.findFirst()
+				.orElseThrow();
 	}
 
 	/**
@@ -609,14 +619,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 				|| this.equals(node)) {
 			return false;
 		}
-		TreeNode<T> mNode = node;
-		do {
-			mNode = mNode.parent();
-			if (this.equals(mNode)) {
-				return true;
-			}
-		} while (!mNode.isRoot());
-		return false;
+		return node.ancestors().anyMatch(this::equals);
 	}
 
 	/**
@@ -634,14 +637,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 				|| this.equals(node)) {
 			return false;
 		}
-		TreeNode<T> mNode = this;
-		do {
-			mNode = mNode.parent();
-			if (node.equals(mNode)) {
-				return true;
-			}
-		} while (!mNode.isRoot());
-		return false;
+		return ancestors().anyMatch(node::equals);
 	}
 
 	/**
@@ -653,19 +649,8 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 		if (isLeaf()) {
 			return 1;
 		}
-		final long[] count = {0};
-		TraversalAction<TreeNode<T>> action = new TraversalAction<TreeNode<T>>() {
-			@Override
-			public void perform(TreeNode<T> node) {
-				count[0]++;
-			}
-
-			@Override
-			public boolean isCompleted() {
-				return false;
-			}
-		};
-		traversePreOrder(action);
+		long[] count = {0};
+		traversePreOrder(node -> count[0]++);
 		return count[0];
 	}
 
@@ -677,14 +662,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * on the longest downward path between that node and a leaf
 	 */
 	public int height() {
-		if (isLeaf()) {
-			return 0;
-		}
-		int height = 0;
-		for (TreeNode<T> subtree : subtrees()) {
-			height = Math.max(height, subtree.height());
-		}
-		return height + 1;
+		return isLeaf() ? 0 : 1 + subtrees().stream().mapToInt(TreeNode::height).max().orElse(0);
 	}
 
 	/**
@@ -696,16 +674,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *         one
 	 */
 	public int level() {
-		if (isRoot()) {
-			return 0;
-		}
-		int level = 0;
-		TreeNode<T> node = this;
-		do {
-			node = node.parent();
-			level++;
-		} while (!node.isRoot());
-		return level;
+		return (int) ancestors().count();
 	}
 
 	/**
@@ -740,18 +709,12 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * @return {@code true} if this object is the same as the obj
 	 *         argument; {@code false} otherwise
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null
-				|| getClass() != obj.getClass()) {
-			return false;
-		}
-		TreeNode<T> that = (TreeNode<T>) obj;
-		return this.id == that.id;
+		return this == obj
+				|| obj instanceof TreeNode<?> that
+				&& getClass() == that.getClass()
+				&& this.id == that.id;
 	}
 
 	/**
@@ -761,7 +724,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 */
 	@Override
 	public int hashCode() {
-		return (int) (this.id ^ (this.id >>> 32));
+		return Long.hashCode(id);
 	}
 
 	/**
@@ -771,28 +734,13 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 */
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
-		builder.append("\n");
-		final int topNodeLevel = level();
-		TraversalAction<TreeNode<T>> action = new TraversalAction<TreeNode<T>>() {
-			@Override
-			public void perform(TreeNode<T> node) {
-				int nodeLevel = node.level() - topNodeLevel;
-				for (int i = 0; i < nodeLevel; i++) {
-					builder.append("|  ");
-				}
-				builder
-						.append("+- ")
-						.append(node.data())
-						.append("\n");
-			}
-
-			@Override
-			public boolean isCompleted() {
-				return false;
-			}
-		};
-		traversePreOrder(action);
+		StringBuilder builder = new StringBuilder("\n");
+		int topNodeLevel = level();
+		traversePreOrder(node -> builder
+				.append("|  ".repeat(node.level() - topNodeLevel))
+				.append("+- ")
+				.append(node.data())
+				.append("\n"));
 		return builder.toString();
 	}
 
@@ -803,18 +751,8 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 * @param <T> type of the tree node
 	 * @return traversal action, which populates the input collection with the tree nodes
 	 */
-	protected static <T> TraversalAction<TreeNode<T>> populateAction(final Collection<TreeNode<T>> collection) {
-		return new TraversalAction<TreeNode<T>>() {
-			@Override
-			public void perform(TreeNode<T> node) {
-				collection.add(node);
-			}
-
-			@Override
-			public boolean isCompleted() {
-				return false;
-			}
-		};
+	protected static <T> TraversalAction<TreeNode<T>> populateAction(Collection<TreeNode<T>> collection) {
+		return collection::add;
 	}
 
 	/**
@@ -890,15 +828,7 @@ public abstract class TreeNode<T> implements Iterable<TreeNode<T>>, Serializable
 	 *         the input collection; {@code false} otherwise
 	 */
 	protected static <T> boolean isAnyNotNull(Collection<T> collection) {
-		if (collection == null || collection.isEmpty()) {
-			return false;
-		}
-		for (T item : collection) {
-			if (item != null) {
-				return true;
-			}
-		}
-		return false;
+		return collection != null && collection.stream().anyMatch(Objects::nonNull);
 	}
 
 	/**

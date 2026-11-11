@@ -6,6 +6,16 @@
 4. Tests migrated from JUnit 4 to JUnit 6
 5. Added NOTICE crediting Scalified
 
+### Additions
+
+1. `stream()` and `spliterator()`: lazy pre-order stream over a node and its descendants
+2. `ancestors()`: stream of proper ancestors, nearest first
+3. `findFirst(T)` and `optionalParent()`: `Optional` variants of `find(T)` and `parent()`
+4. `TraversalAction` is a `@FunctionalInterface`; `isCompleted()` defaults to `false`, so
+   whole-tree traversals can be written as lambdas
+5. `containsAll` / `removeAll` accept `Collection<? extends TreeNode<T>>`
+6. `findAll` and `siblings` return their results in tree order
+
 ### Fixes
 
 1. `commonAncestor` returned wrong results for nodes in different branches at different depths
@@ -19,6 +29,7 @@
    is now detected with a modification counter, which also catches size-preserving changes
 7. `clone` is now a deep copy with its own identity. **Behavior change:** the clone is no longer
    equal to the original
+8. `ArrayMultiTreeNode` is backed by an `ArrayList`; serialized form changed (`serialVersionUID` 2)
 
 # 0.2.4
 

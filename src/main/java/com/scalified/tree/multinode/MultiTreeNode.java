@@ -21,8 +21,8 @@ import com.scalified.tree.TreeNode;
 import com.scalified.tree.TreeNodeException;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
 
 /**
  * This class represents the K-ary (multiple node) tree data
@@ -63,40 +63,31 @@ public abstract class MultiTreeNode<T> extends TreeNode<T> {
 		}
 		boolean result = false;
 		for (MultiTreeNode<T> subtree : subtrees) {
-			if (add(subtree)) {
-				result = true;
-			}
+			result |= add(subtree);
 		}
 		return result;
 	}
 
 	/**
 	 * Returns the collection of nodes, which have the same parent
-	 * as the current node; {@link Collections#emptyList()} if the current
+	 * as the current node; an empty collection if the current
 	 * tree node is root or if the current tree node has no subtrees
 	 *
 	 * @return collection of nodes, which have the same parent as
-	 *         the current node; {@link Collections#emptyList()} if the
+	 *         the current node; an empty collection if the
 	 *         current tree node is root or if the current tree node has
 	 *         no subtrees
 	 */
+	@SuppressWarnings("unchecked")
 	public Collection<? extends MultiTreeNode<T>> siblings() {
 		if (isRoot()) {
 			String message = String.format("Unable to find the siblings. The tree node %1$s is root", root());
 			throw new TreeNodeException(message);
 		}
-		Collection<? extends TreeNode<T>> parentSubtrees = parent.subtrees();
-		int parentSubtreesSize = parentSubtrees.size();
-		if (parentSubtreesSize == 1) {
-			return Collections.emptySet();
-		}
-		Collection<MultiTreeNode<T>> siblings = new HashSet<>(parentSubtreesSize - 1);
-		for (TreeNode<T> parentSubtree : parentSubtrees) {
-			if (!parentSubtree.equals(this)) {
-				siblings.add((MultiTreeNode<T>) parentSubtree);
-			}
-		}
-		return siblings;
+		return parent().subtrees().stream()
+				.filter(sibling -> !sibling.equals(this))
+				.map(sibling -> (MultiTreeNode<T>) sibling)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/**
@@ -114,12 +105,7 @@ public abstract class MultiTreeNode<T> extends TreeNode<T> {
 				|| areAllNulls(subtrees)) {
 			return false;
 		}
-		for (MultiTreeNode<T> subtree : subtrees) {
-			if (!this.hasSubtree(subtree)) {
-				return false;
-			}
-		}
-		return true;
+		return subtrees.stream().allMatch(this::hasSubtree);
 	}
 
 	/**
@@ -140,10 +126,7 @@ public abstract class MultiTreeNode<T> extends TreeNode<T> {
 		}
 		boolean result = false;
 		for (MultiTreeNode<T> subtree : subtrees) {
-			boolean currentResult = dropSubtree(subtree);
-			if (!result && currentResult) {
-				result = true;
-			}
+			result |= dropSubtree(subtree);
 		}
 		return result;
 	}

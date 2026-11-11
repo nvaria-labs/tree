@@ -21,6 +21,7 @@ import com.scalified.tree.TraversalAction;
 import com.scalified.tree.TreeNode;
 import com.scalified.tree.TreeNodeException;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -38,6 +39,7 @@ public class LinkedMultiTreeNode<T> extends MultiTreeNode<T> {
 	/**
 	 * Current UID of this object used for serialization
 	 */
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	/**

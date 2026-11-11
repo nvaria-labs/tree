@@ -1,6 +1,8 @@
-# Tree Data Structure Java Library
+# tree
 
-Fork of [Scalified/tree](https://github.com/Scalified/tree), maintained by Nvaria GmbH.
+Generic K-ary tree data structure for Java 21+: array- and linked-list-based nodes with pre- and post-order
+traversal, streams and fail-fast iteration. Fork of [Scalified/tree](https://github.com/Scalified/tree),
+maintained by Nvaria GmbH.
 
 ## Description
 

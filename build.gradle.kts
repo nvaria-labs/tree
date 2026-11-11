@@ -113,8 +113,10 @@ mavenPublishing {
     }
 
     pom {
-        name.set("Tree Data Structure Java Library")
-        description.set("Tree Data Structure Java Library")
+        name.set("tree")
+        description.set(
+            "Generic K-ary tree data structure for Java 21+: array- and linked-list-based nodes with pre- and post-order traversal, streams and fail-fast iteration. Fork of Scalified/tree."
+        )
         url.set(projectUrl)
         inceptionYear.set("2016")
 

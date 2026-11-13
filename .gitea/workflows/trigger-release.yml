@@ -16,7 +16,8 @@ jobs:
   trigger-release:
     runs-on: ubuntu-latest
     container:
-      # Pinned by digest; update the digest when the image is rebuilt
+      # Pinned by digest, which also pins the Gradle that the steps use (gradle, not ./gradlew:
+      # no wrapper download per job). Update the digest when the image is rebuilt
       image: registry.nvaria.cloud/ubuntu-act-jdk25:latest@sha256:af64c5d732fc196c89b2f2f3c599b85eccd2d636a1a00d12ef997a661bccd82b
       credentials:
         username: ${{ secrets.DOCKERUSER }}
@@ -50,4 +51,4 @@ jobs:
           git config --global user.email "gitea@nvaria.cloud"
           git config --global user.name "Gitea Action"
       - name: Run gradle release task
-        run: ./gradlew release -PreleaseVersion="$RELEASE_VERSION" -PpostReleaseVersion="$POST_RELEASE_VERSION"
+        run: gradle release -PreleaseVersion="$RELEASE_VERSION" -PpostReleaseVersion="$POST_RELEASE_VERSION"
